@@ -1,0 +1,5 @@
+google-genai==2.19.0
+numpy>=1.26,<3
+opencv-python-headless>=4.10,<5
+Pillow>=10,<13
+pydantic>=2.10,<3

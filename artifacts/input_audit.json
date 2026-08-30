@@ -1,0 +1,8 @@
+{
+  "questions": 1859,
+  "targets": 3207,
+  "estimated_sparse_images": 37984,
+  "estimated_gemini_calls_at_8_images": 5592,
+  "input_issues": 0,
+  "issues": []
+}

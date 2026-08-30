@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task 2 Technical Report — Gemini 3.7 + SAM3 Routed Tracking</title>
+  <style>
+    :root {
+      --ink: #152033;
+      --muted: #5c6879;
+      --paper: #f6f7fb;
+      --card: #ffffff;
+      --line: #dce2ea;
+      --navy: #172b4d;
+      --blue: #225ee6;
+      --cyan: #0a8fa3;
+      --green: #21825c;
+      --amber: #a75f00;
+      --red: #a73a3a;
+      --code: #101827;
+      --code-ink: #e7edf6;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, Pretendard, "Noto Sans KR", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.68;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    code {
+      padding: .1rem .3rem;
+      border-radius: 4px;
+      background: #edf1f6;
+      font-size: .91em;
+      overflow-wrap: anywhere;
+    }
+    .hero {
+      color: white;
+      background:
+        radial-gradient(circle at 85% 15%, rgba(32, 169, 192, .36), transparent 25rem),
+        linear-gradient(125deg, #101d35 0%, #173e72 58%, #126779 100%);
+      padding: 64px 24px 52px;
+    }
+    .hero-inner, main, .toc-inner { max-width: 1120px; margin: 0 auto; }
+    .eyebrow {
+      margin-bottom: 11px;
+      color: #91dced;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 { max-width: 930px; margin: 0; font-size: clamp(34px, 5vw, 57px); line-height: 1.08; }
+    .subtitle { max-width: 880px; margin: 18px 0 0; color: #d7e6f6; font-size: 17px; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, .24);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .09);
+      color: #edf7ff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .toc { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.94); backdrop-filter: blur(10px); }
+    .toc-inner { display: flex; gap: 4px; overflow-x: auto; padding: 9px 20px; }
+    .toc a { flex: none; padding: 7px 10px; border-radius: 7px; color: #314158; font-size: 13px; font-weight: 700; }
+    .toc a:hover { background: #edf3ff; text-decoration: none; }
+    main { padding: 34px 20px 80px; }
+    .summary-grid, .metric-grid, .file-grid { display: grid; gap: 14px; }
+    .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 18px; }
+    .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card, section {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--card);
+      box-shadow: 0 8px 28px rgba(28, 44, 75, .05);
+    }
+    .card { padding: 18px; }
+    .metric .value { display: block; color: var(--navy); font-size: 26px; font-weight: 850; letter-spacing: -.03em; }
+    .metric .label { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .callout { margin: 17px 0; padding: 15px 17px; border-left: 4px solid var(--blue); border-radius: 7px; background: #eef4ff; }
+    .callout.warn { border-color: var(--amber); background: #fff6e8; }
+    .callout.danger { border-color: var(--red); background: #fff0f0; }
+    .callout.good { border-color: var(--green); background: #edf9f3; }
+    .callout strong { color: var(--navy); }
+    .pipeline {
+      display: grid;
+      grid-template-columns: 1fr 35px 1fr 35px 1fr;
+      align-items: stretch;
+      gap: 7px;
+      margin: 22px 0 30px;
+    }
+    .stage { padding: 16px; border: 1px solid #cfd9e8; border-radius: 12px; background: linear-gradient(180deg, #fff, #f7f9fc); }
+    .stage .n { color: var(--blue); font-size: 11px; font-weight: 850; letter-spacing: .1em; }
+    .stage strong { display: block; margin-top: 5px; font-size: 15px; }
+    .stage span { display: block; margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .arrow { align-self: center; color: #8391a6; font-size: 25px; text-align: center; }
+    section { margin-top: 28px; padding: 30px; scroll-margin-top: 70px; }
+    .section-no { color: var(--blue); font-size: 12px; font-weight: 850; letter-spacing: .15em; text-transform: uppercase; }
+    h2 { margin: 4px 0 10px; color: var(--navy); font-size: 30px; line-height: 1.2; }
+    h3 { margin: 28px 0 9px; color: #243a59; font-size: 19px; }
+    h4 { margin: 21px 0 7px; color: #354c6b; font-size: 15px; }
+    p { margin: 8px 0 12px; }
+    ul, ol { padding-left: 22px; }
+    li + li { margin-top: 5px; }
+    .method-steps { counter-reset: method; list-style: none; padding: 0; }
+    .method-steps > li { position: relative; min-height: 38px; margin: 12px 0; padding-left: 48px; }
+    .method-steps > li::before {
+      counter-increment: method;
+      content: counter(method);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: #e9f0ff;
+      color: var(--blue);
+      font-weight: 850;
+      line-height: 32px;
+      text-align: center;
+    }
+    .table-wrap { margin: 13px 0 20px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f1f4f8; color: #33445b; font-size: 11px; letter-spacing: .03em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .tag { display: inline-block; margin-right: 5px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+    .tag.core { background: #dfe9ff; color: #244da7; }
+    .tag.run { background: #daf4ea; color: #176947; }
+    .tag.data { background: #f5e8ca; color: #7c5510; }
+    .tag.audit { background: #ece7f8; color: #5d4789; }
+    pre {
+      margin: 13px 0 20px;
+      padding: 17px;
+      border: 1px solid #26344a;
+      border-radius: 10px;
+      background: var(--code);
+      color: var(--code-ink);
+      font-size: 12px;
+      line-height: 1.55;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    pre .comment { color: #8fa2bb; }
+    .equation { margin: 15px 0; padding: 17px; border: 1px solid #cdd8e8; border-radius: 10px; background: #f6f9fd; font-family: Georgia, serif; font-size: 17px; text-align: center; }
+    .small { color: var(--muted); font-size: 12px; }
+    .path { font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li { position: relative; padding-left: 25px; }
+    .checklist li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 900; }
+    footer { margin-top: 28px; color: var(--muted); font-size: 12px; text-align: center; }
+    @media (max-width: 900px) {
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pipeline { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); }
+    }
+    @media (max-width: 620px) {
+      .hero { padding-top: 45px; }
+      section { padding: 21px 17px; }
+      .summary-grid, .metric-grid { grid-template-columns: 1fr; }
+      h2 { font-size: 25px; }
+    }
+    @media print {
+      body { background: white; font-size: 11px; }
+      .hero { padding: 30px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .toc { display: none; }
+      main { max-width: none; padding: 20px 0; }
+      section, .card { break-inside: avoid; box-shadow: none; }
+      pre { white-space: pre-wrap; word-break: break-word; }
+      a { color: inherit; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Grounded Video Question Answering · Team Task 2</div>
+      <h1>Gemini 3.7 + SAM3<br>Routed Tracking Technical Report</h1>
+      <p class="subtitle">
+        최종 제출본 <strong>final_routed_v7_gemini37_amodal_train_v1</strong>을 생성한
+        Gemini plan, sparse amodal box, zero-shot SAM3, trained amodal SAM3의 구현과 재현 절차를
+        실제 코드 및 run manifest 기준으로 정리한다.
+      </p>
+      <div class="hero-meta">
+        <span class="pill">작성 기준 2026-08-27 UTC</span>
+        <span class="pill">Gemini 3.7 Flash</span>
+        <span class="pill">SAM3 PVS</span>
+        <span class="pill">SAIL-VOS amodal residual training</span>
+        <span class="pill">최종 제출은 predictions.json 1개</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="report sections">
+    <div class="toc-inner">
+      <a href="#s1">1. Gemini-plan 추출</a>
+      <a href="#s2">2. Gemini sparse tracking</a>
+      <a href="#s3">3. SAM3 zero-shot (pipeline-v7)</a>
+      <a href="#s4">4. SAM3 training (amodal_train)</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="summary-grid">
+      <div class="card metric"><span class="value">932</span><span class="label">test videos</span></div>
+      <div class="card metric"><span class="value">1,859</span><span class="label">questions · coverage 100%</span></div>
+      <div class="card metric"><span class="value">3,206</span><span class="label">tracks in final JSON</span></div>
+      <div class="card metric"><span class="value">1,886,126</span><span class="label">bounding boxes</span></div>
+    </div>
+
+    <div class="callout good">
+      <strong>최종 산출물 검증.</strong>
+      <span class="path">predictions.json</span>은 135,085,955 bytes이며 SHA-256은
+      <code>688e84e966947bdf47ceb20f504737b4ee43680784815b732c9b3e0339d6d996</code>이다.
+      좌표 범위, 양의 box 면적, frame 정렬, 중복 ID, 최대 track 수 검증에서 오류가 없었다.
+      <span class="path">route_manifest.json</span>은 내부 provenance 파일이며 제출 대상이 아니다.
+    </div>
+
+    <div class="pipeline" aria-label="pipeline overview">
+      <div class="stage">
+        <span class="n">STAGE 1</span>
+        <strong>Gemini plan</strong>
+        <span>질문 해석 → stable target ID → visibility segment → anchor frame/box</span>
+      </div>
+      <div class="arrow">→</div>
+      <div class="stage">
+        <span class="n">TWO DENSE CANDIDATES</span>
+        <strong>SAM3 v7 / trained SAM3</strong>
+        <span>같은 plan과 box prompt로 zero-shot 또는 amodal residual tracking</span>
+      </div>
+      <div class="arrow">→</div>
+      <div class="stage">
+        <span class="n">STAGE 2 + ROUTING</span>
+        <strong>Gemini sparse fusion</strong>
+        <span>30-frame amodal grid + trusted SAM overlay → 질문 유형별 dense branch 선택</span>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>재현성 감사 결과.</strong> 핵심 모델/추론 코드는 보존되어 있으나, 최종 조립 중
+      (a) amodal 제출을 질문별 fusion 입력으로 분리하는 단계, (b) 1/1000보다 얇은 near-zero
+      box frame 2,290개를 72개 파일에서 제거하는 단계, (c) 최종 504문항 routing은
+      독립된 저장소 스크립트가 아니라 inline Python으로 실행되었다. 아래 Section 4에 동일 로직과
+      필요한 입력을 명시한다. Git commit만 checkout해서는 최종 byte-identical JSON이 자동 생성되지 않으므로,
+      현재 코드·plan·checkpoint·route manifest를 함께 보존해야 한다.
+    </div>
+
+    <section id="s1">
+      <div class="section-no">Section 01</div>
+      <h2>Gemini-plan 추출</h2>
+      <p>
+        Stage 1의 목적은 각 질문을 직접 box sequence로 답하는 것이 아니라, 뒤의 두 tracker와
+        sparse predictor가 공동으로 사용할 <strong>불변 tracking contract</strong>를 생성하는 것이다.
+        최종 test plan은 Vertex AI의 <code>gemini-3.7-flash</code>로 생성되었으며,
+        <code>multi_anchor_plan.json</code> 하나가 질문 하나의 target ID, 존재 구간, prompt를 모두 고정한다.
+      </p>
+
+      <h3>Method</h3>
+      <ol class="method-steps">
+        <li>
+          <strong>질문과 전체 video를 저비용 proxy로 변환.</strong>
+          원본에서 최대 192 frame을 균일 sampling하고 장변을 최대 512 px로 축소한다.
+          각 frame에 <code>orig_frame=N</code>을 burn-in한 MP4를 만들며 proxy FPS는 최대 6이다.
+          Gemini video part의 sampling rate는 별도로 4 fps로 지정한다.
+        </li>
+        <li>
+          <strong>answer noun phrase 추출.</strong>
+          질문이 요구하는 실제 물체/물체 집합을 간결한 시각적 명사구로 반환한다. 사람·손·팔은
+          target에서 제외하고 distractor와 구분되는 속성을 포함한다.
+        </li>
+        <li>
+          <strong>critic verification.</strong>
+          두 번째 독립 호출이 질문을 다시 풀고 noun phrase를 <code>correct/wrong</code>으로 판정한다.
+          오류이면 noun phrase를 교체하며, 복수 물체 문제의 expected instance count를 anchor planner에 전달한다.
+        </li>
+        <li>
+          <strong>stable identity와 anchor 선택.</strong>
+          각 실제 instance에 연속된 <code>obj_id=0,1,…</code>를 부여하고,
+          <code>visual_identity_description</code>과 여러 <code>visibility_segments</code>를 만든다.
+          모든 target이 잘 보이는 한 frame을 우선하며 불가능할 때만 최대 3개의 최소 anchor set을 고른다.
+          anchor frame은 stride-10 grid에 맞추고, 벗어난 응답은 가장 가까운 허용 frame으로 정렬한다.
+        </li>
+        <li>
+          <strong>exact-frame box 추출.</strong>
+          선택한 원본 anchor image를 다시 제공하고 각 target마다 tight
+          <code>[ymin,xmin,ymax,xmax]</code>, 0–1000 box를 받는다. 모든 호출은 temperature 0,
+          forced function calling(<code>mode=ANY</code>)과 Pydantic schema validation을 사용한다.
+        </li>
+      </ol>
+
+      <div class="equation">
+        Plan = {question semantics, stable target IDs, visibility segments, anchor frames, anchor boxes}
+      </div>
+
+      <h3>최종 실행 설정</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>항목</th><th>최종 값</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td>model</td><td><code>gemini-3.7-flash</code></td><td>noun/critic/anchor/box 전 호출</td></tr>
+            <tr><td>API</td><td>Vertex AI, location <code>global</code>, API v1</td><td>ADC 인증; credential 파일은 코드에 포함하지 않음</td></tr>
+            <tr><td>proxy</td><td>max 192 frames, max dimension 512, Gemini 4 fps</td><td>전체 video 문맥과 원본 frame 번호 유지</td></tr>
+            <tr><td>planner grid</td><td>stride 10</td><td>anchor 후보 frame 집합</td></tr>
+            <tr><td>anchor count</td><td>최대 3</td><td>모든 target ID coverage 보장</td></tr>
+            <tr><td>boundary radius</td><td>15 frames</td><td>하류 SAM sampling metadata</td></tr>
+            <tr><td>calls/sample</td><td>3 global calls + anchor별 box call</td><td>critic 사용 시 보통 4–6 calls</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>재현에 필요한 코드</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>구분</th><th>파일</th><th>필요한 이유</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag core">CORE</span></td><td class="path"><a href="../../gemini-plan/code/box_baseline.py">gemini-plan/code/box_baseline.py</a></td><td>proxy 생성, Vertex function call, retry, schema, 공통 video/SAM utility</td></tr>
+            <tr><td><span class="tag core">CORE</span></td><td class="path"><a href="../../gemini-plan/code/multi_anchor_box_baseline.py">gemini-plan/code/multi_anchor_box_baseline.py</a></td><td>critic, stable target/segment schema, anchor selection, exact-frame box, plan 저장</td></tr>
+            <tr><td><span class="tag run">RUN</span></td><td class="path"><a href="../../gemini-plan/code/run_plan_pilot.sh">gemini-plan/code/run_plan_pilot.sh</a></td><td>TSV sharding, resume/skip, plan-only batch 실행</td></tr>
+            <tr><td><span class="tag data">INPUT</span></td><td class="path"><a href="../../gemini-plan/subsets/test.tsv">gemini-plan/subsets/test.tsv</a></td><td>1,859 test 질문의 canonical 순서</td></tr>
+            <tr><td><span class="tag data">ENV</span></td><td class="path"><a href="../../gemini-plan/requirements-plan.txt">gemini-plan/requirements-plan.txt</a></td><td><code>google-genai 2.19.0</code>, OpenCV, NumPy, Pillow, Pydantic</td></tr>
+            <tr><td><span class="tag audit">AUDIT</span></td><td class="path"><a href="../../gemini-plan/code/score_anchor_selection.py">gemini-plan/code/score_anchor_selection.py</a></td><td>validation에서 anchor가 GT answer target에 놓였는지 분석; test 생성에는 불필요</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>재현 명령</h3>
+      <pre><span class="comment"># credentials 자체는 report/repository에 저장하지 않는다.</span>
+cd /workspace/vqa-proj/minseon/gemini-plan
+python3.11 -m venv .venv
+.venv/bin/pip install -r requirements-plan.txt
+
+export GOOGLE_CLOUD_PROJECT="YOUR_VERTEX_PROJECT"
+export GOOGLE_CLOUD_LOCATION="global"
+export GOOGLE_GENAI_USE_VERTEXAI="true"
+export GOOGLE_APPLICATION_CREDENTIALS="/secure/path/to/adc.json"
+
+DATA_SPLIT=test \
+TSV="$PWD/subsets/test.tsv" \
+OUTPUT_BASE="$PWD/reproductions/test" \
+MODELS="gemini-3.7-flash" \
+bash code/run_plan_pilot.sh</pre>
+
+      <div class="callout">
+        <strong>재현 산출물.</strong>
+        <span class="path">gemini-plan/reproductions/test/gemini-3.7-flash/&lt;video&gt;_q&lt;id&gt;/multi_anchor_plan.json</span>.
+        모델 생성 결과는 deterministic을 목표로 해도 byte-identical을 보장하지 않는다. 최종 제출을 정확히 재현할 때는
+        당시 저장된 1,859개 plan을 재사용해야 한다.
+      </div>
+    </section>
+
+    <section id="s2">
+      <div class="section-no">Section 02</div>
+      <h2>Gemini sparse tracking</h2>
+      <p>
+        Stage 2는 Stage 1을 다시 풀지 않는다. 저장된 target ID와 identity를 고정한 채 원본의
+        <strong>0, 30, 60, … frame</strong>에서 Gemini 3.7 Flash가 amodal box를 예측한다.
+        이 sparse grid는 occlusion 구간에서 SAM의 visible-mask drift를 보완하고, 신뢰 가능한 구간에서는
+        dense SAM의 시간 해상도를 받아들이는 기준 좌표계로 사용된다.
+      </p>
+
+      <h3>Sparse prediction method</h3>
+      <ol class="method-steps">
+        <li>
+          <strong>decoder-exact frame extraction.</strong>
+          <code>ffmpeg select=not(mod(n,30))</code>으로 source frame을 한 번만 decode하여 JPEG로 cache한다.
+          단순 timestamp seek가 아니라 frame index 기반이므로 plan과 평가 좌표계가 일치한다.
+        </li>
+        <li>
+          <strong>8-frame bounded image batch.</strong>
+          기본 8장과 compact plan을 한 API call에 넣는다. temperature 0, thinking level high,
+          max output 32,768 tokens, JSON response schema를 사용한다.
+        </li>
+        <li>
+          <strong>amodal identity contract.</strong>
+          각 box는 정확히 한 target instance만 포함한다. hand/occluder/여러 target의 union box를 금지한다.
+          <code>partially_occluded</code>이면 보이지 않는 부분까지 실제 full extent를 추정하고,
+          <code>fully_occluded</code>이면 temporal context로 target 자체의 위치·크기를 추정한다.
+        </li>
+        <li>
+          <strong>presence 해석.</strong>
+          Stage 1의 visibility segment는 “보였던 구간”이지 물리적 presence가 아니다.
+          segment 내부 ID 누락은 오류로 처리하지만 segment 밖의 hidden target을 자동 삭제하지 않는다.
+          scene을 실제로 떠난 경우에만 해당 ID를 생략한다.
+        </li>
+        <li>
+          <strong>strict validation 및 retry.</strong>
+          frame 순서, known ID subset, ID 중복, visibly-confirmed ID coverage, 0–1000 양의 box를 검증한다.
+          schema/validation 오류와 transient API 오류는 최대 3회 retry한다.
+        </li>
+      </ol>
+
+      <h3>v13-style sparse-first fusion</h3>
+      <p>
+        sparse와 dense를 무조건 평균하지 않는다. 먼저 compact v7 export의 전-frame hold를
+        <code>run_result.non_empty_frames ∩ segment_gating.intervals</code>로 되돌려 실제 sampled SAM coverage를
+        근사한 뒤 target별 trust gate를 적용한다.
+      </p>
+      <div class="equation">
+        trusted = [IoU(seed, SAM) ≥ 0.25] ∧ [shared grid frames ≥ 3] ∧ [mean IoU(sparse, SAM) ≥ 0.30]
+      </div>
+      <ol>
+        <li>gate 실패 target은 Gemini sparse grid만 사용한다.</li>
+        <li>gate 통과 target은 sparse grid를 먼저 놓고 실제 SAM sampled frame으로 overlay한다.</li>
+        <li>shared frame에서 IoU ≥ 0.30이면 residual <code>r(t)=box_sparse(t)-box_SAM(t)</code>를 만들고, SAM box 좌표에 시간 보간한다. 한쪽 anchor만 있으면 최대 60 frame까지만 residual을 전달한다.</li>
+        <li>빈 gap은 길이 ≤ 6이거나 두 endpoint box IoU ≥ 0.30일 때만 선형 보간한다. endpoint hold와 무조건 densify는 하지 않는다.</li>
+      </ol>
+
+      <div class="callout warn">
+        <strong>알려진 한계.</strong> pipeline-v7 compact JSON에는 target별 raw mask failure가 없으므로 sampled
+        coverage 복원은 lossy이다. 한 frame에서 일부 target만 실패한 경우까지는 복구할 수 없다.
+        이 사실은 각 <code>fusion_meta.json</code>에 기록된다.
+      </div>
+
+      <h3>재현에 필요한 코드</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>구분</th><th>파일</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag core">CORE</span></td><td class="path"><a href="../../gemini-plan/sparse-output/generate_sparse.py">gemini-plan/sparse-output/generate_sparse.py</a></td><td>ffmpeg exact frames, prompt/schema, API batch, validation, sparse JSON</td></tr>
+            <tr><td><span class="tag core">CORE</span></td><td class="path"><a href="../../gemini-plan/sparse-output/sparse_common.py">gemini-plan/sparse-output/sparse_common.py</a></td><td>ID/presence 규칙, box 변환, IoU, sharding 공통 함수</td></tr>
+            <tr><td><span class="tag run">RUN</span></td><td class="path"><a href="../../gemini-plan/sparse-output/run_sparse.sh">gemini-plan/sparse-output/run_sparse.sh</a></td><td>Vertex 환경과 shard launcher</td></tr>
+            <tr><td><span class="tag core">CORE</span></td><td class="path"><a href="../../gemini-plan/sparse-output/fuse_dense_sparse.py">gemini-plan/sparse-output/fuse_dense_sparse.py</a></td><td>coverage 복원, target trust gate, residual coupling, interpolation, format validation</td></tr>
+            <tr><td><span class="tag run">RUN</span></td><td class="path"><a href="../../gemini-plan/sparse-output/merge_shards.py">gemini-plan/sparse-output/merge_shards.py</a></td><td>fusion shard merge와 1,859문항 coverage 검증</td></tr>
+            <tr><td><span class="tag audit">TEST</span></td><td class="path"><a href="../../gemini-plan/sparse-output/test_sparse_output.py">gemini-plan/sparse-output/test_sparse_output.py</a></td><td>prompt presence contract, box 변환, coupling, end-to-end synthetic regression</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>재현 명령</h3>
+      <pre>cd /workspace/vqa-proj/minseon/gemini-plan
+export GOOGLE_CLOUD_PROJECT="YOUR_VERTEX_PROJECT"
+
+<span class="comment"># Stage 2 sparse; shared volume에서 SHARD_INDEX=0..3 각각 실행</span>
+NUM_SHARDS=4 SHARD_INDEX=0 bash sparse-output/run_sparse.sh
+
+<span class="comment"># v7 dense와 fusion; SHARD_INDEX=0..3 각각 실행</span>
+.venv/bin/python sparse-output/fuse_dense_sparse.py \
+  --subset subsets/test.tsv \
+  --plan-root reproductions/test/gemini-3.7-flash \
+  --dense-root ../submit/pipeline-v7_test_gemini-3.7-flash_stride3 \
+  --sparse-root sparse-output/results/sparse \
+  --output-root sparse-output/results/fused \
+  --num-shards 4 --shard-index 0
+
+.venv/bin/python sparse-output/merge_shards.py \
+  --input-root sparse-output/results/fused \
+  --subset subsets/test.tsv</pre>
+
+      <h3>최종 run에서의 실제 처리</h3>
+      <ul>
+        <li>1,859문항 중 1,857문항은 sparse+v7 fusion 성공.</li>
+        <li><code>video_7360_q5</code>, <code>video_7567_q5</code>는 visibly-confirmed ID 누락으로 sparse 생성이 완료되지 않아 기존 pipeline-v7 결과를 fallback으로 유지.</li>
+        <li>최종 v7-base fusion 결과 위치: <span class="path">gemini-plan/sparse-output/results/fused/predictions.json</span>.</li>
+      </ul>
+      <div class="callout danger">
+        <strong>자동화 공백.</strong> 현재 <code>merge_shards.py</code>는 누락 sample이 있으면 의도적으로 실패한다.
+        최종 base의 “1,857 fused + 2 v7 fallback” 조립은 inline Python으로 수행되었다. byte-identical 재현을
+        원하면 현재 <code>results/fused/predictions.json</code>과 <code>fusion_final_summary.json</code>을 보존하거나,
+        merge 전에 두 sample을 v7 per-sample JSON에서 명시적으로 삽입하는 wrapper를 추가해야 한다.
+      </div>
+    </section>
+
+    <section id="s3">
+      <div class="section-no">Section 03</div>
+      <h2>SAM3 zero-shot tracking (pipeline-v7)</h2>
+      <p>
+        pipeline-v7은 학습 없이 official SAM3 PVS checkpoint를 사용한다. Stage 1 plan의 target ID,
+        anchor frame, anchor box를 그대로 replay하므로 이 단계에서는 Gemini를 다시 호출하지 않는다.
+        최종 dense branch는 <strong>joint multi-object session, source stride 3, bidirectional propagation,
+        visibility-segment gating</strong>으로 생성되었다.
+      </p>
+
+      <h3>Method</h3>
+      <ol class="method-steps">
+        <li>
+          <strong>adaptive sampled frame set.</strong>
+          기본 source frame <code>0,3,6,…</code>에 모든 anchor, 마지막 video frame,
+          각 target visibility segment의 시작/끝 및 global first/last visibility 주위 ±15 frame의
+          stride-1 window를 합친다.
+        </li>
+        <li>
+          <strong>한 SAM3 session에 모든 box 등록.</strong>
+          plan의 모든 anchor와 target box를 stable <code>obj_id</code>로 native instance-tracker box prompt에 등록한다.
+          box는 corner points와 box labels로 변환된다.
+        </li>
+        <li>
+          <strong>single bidirectional propagation.</strong>
+          모든 prompt를 등록한 후 한 번 전파한다. 시작 anchor는 sampled video 중앙에 가장 가까운 non-terminal
+          anchor를 선택한다. terminal frame에서 시작하면 conditioning frame 외 mask가 나오지 않는 실패가 있어
+          대안 anchor가 존재할 때 terminal anchor를 제외한다.
+        </li>
+        <li>
+          <strong>object-wise temporal gating.</strong>
+          SAM3가 이미 사라진 유사 물체에 높은 confidence mask를 계속 내는 것을 막기 위해
+          각 target의 visibility segment ±15 밖 output을 제거한다.
+        </li>
+        <li>
+          <strong>compact dense export.</strong>
+          raw mask가 RAM에 있을 때 normalized XYXY box로 변환한다. sampled frame 사이에서는 historical v7
+          방식대로 previous-value fill, 첫 관측 이전은 first-value fill하여 전체 source frame에 box를 기록한다.
+          대용량 pickle은 저장하지 않는다. Stage 2 fusion은 뒤에서 이 hold를 sampled coverage로 다시 제한한다.
+        </li>
+      </ol>
+
+      <h3>재현에 필요한 코드와 자산</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>구분</th><th>파일/자산</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag core">CORE</span></td><td class="path"><a href="../../pipeline-v7/multi_anchor_box_baseline.py">pipeline-v7/multi_anchor_box_baseline.py</a></td><td>plan replay, sampled frame set, joint session, propagation, gating, compact export</td></tr>
+            <tr><td><span class="tag core">BASE</span></td><td class="path"><a href="../../gemini-plan/code/box_baseline.py">gemini-plan/code/box_baseline.py</a></td><td>pipeline-v6가 없는 pod에서 사용한 정확한 local SAM3/video helper fallback</td></tr>
+            <tr><td><span class="tag run">RUN</span></td><td class="path"><a href="../../pipeline-v7/persistent_test_worker.py">pipeline-v7/persistent_test_worker.py</a></td><td>GPU당 SAM3 1회 load, video cache, deterministic video shard, retry/resume</td></tr>
+            <tr><td><span class="tag run">RUN</span></td><td class="path"><a href="../../pipeline-v7/run_test_persistent_multigpu.sh">pipeline-v7/run_test_persistent_multigpu.sh</a></td><td>4 GPU × 2 workers, 최종 stride-3 test launcher</td></tr>
+            <tr><td><span class="tag run">MERGE</span></td><td class="path"><a href="../../pipeline-v7/merge_compact_predictions.py">pipeline-v7/merge_compact_predictions.py</a></td><td>per-sample JSON merge, dense/box/coverage validation</td></tr>
+            <tr><td><span class="tag data">MODEL</span></td><td class="path"><a href="../../amodal_train/checkpoints/sam3.pt">amodal_train/checkpoints/sam3.pt</a></td><td>official SAM3 checkpoint; SHA-256 <code>9999e234…3cf8c9e</code></td></tr>
+            <tr><td><span class="tag data">SOURCE</span></td><td class="path"><a href="../../amodal_train/sam3/README.md">amodal_train/sam3/</a></td><td>SAM3 source commit <code>5dd401d1c5c1d5c3eedff06d41b77af824517619</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>재현 명령</h3>
+      <pre>cd /workspace/vqa-proj/minseon
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+export WORKERS_PER_GPU=2
+
+bash pipeline-v7/run_test_persistent_multigpu.sh
+
+<span class="comment"># single sample equivalent; saved plan이므로 Gemini call은 0회</span>
+amodal_train/.venv/bin/python pipeline-v7/multi_anchor_box_baseline.py \
+  --video-id video_6358 --question-id 4 \
+  --reuse-plan-json gemini-plan/reproductions/test/gemini-3.7-flash/video_6358_q4/multi_anchor_plan.json \
+  --sam-stride 3 --boundary-radius 15 --segment-gate-margin 15 \
+  --propagation-start middle --session-mode joint \
+  --compact-box-output --no-render-visualizations \
+  --output-root submit/pipeline-v7_test_gemini-3.7-flash_stride3</pre>
+
+      <div class="callout">
+        <strong>최종 zero-shot 산출물.</strong>
+        <span class="path">submit/pipeline-v7_test_gemini-3.7-flash_stride3/predictions.json</span>과
+        각 sample의 <code>run_result.json</code>, <code>sam_frame_map.json</code>,
+        <code>segment_gating.json</code>이 Stage 2 fusion의 dense input 및 coverage metadata가 된다.
+      </div>
+    </section>
+
+    <section id="s4">
+      <div class="section-no">Section 04</div>
+      <h2>SAM3 training version (amodal_train)</h2>
+      <p>
+        training branch는 official SAM3의 visible tracking 경로와 memory를 고정하고, SAIL-VOS의
+        visible/amodal annotation으로 작은 <strong>amodal mask-logit residual head</strong>만 학습한다.
+        최종 epoch-20 checkpoint를 Stage 1의 동일 Gemini box prompt에 적용하며,
+        continuous-state + skip memory guard로 전체 video를 추론한다.
+      </p>
+
+      <h3>Training method</h3>
+      <h4>데이터와 causal contract</h4>
+      <ul>
+        <li>SAIL-VOS official RGB, native visible instance <code>.npy</code>, object별 amodal PNG 사용.</li>
+        <li>10 train sequences / 4 disjoint validation sequences.</li>
+        <li>shot-aware manifest schema v2, shot MAE threshold 0.12, boundary guard 1 frame.</li>
+        <li>clip length 8, source stride 1, manifest가 정한 forward 또는 backward 방향.</li>
+        <li>clip 첫 frame은 반드시 <code>PRESENT_VISIBLE</code>이며 transformed visible bbox 하나만 prompt로 사용.</li>
+        <li><code>FULLY_OCCLUDED</code>는 amodal positive로 취급하고 <code>IGNORE</code>는 loss에서 제외.</li>
+      </ul>
+
+      <h4>Residual architecture</h4>
+      <p>
+        backbone, visible decoder, 별도 복제한 amodal proposal decoder까지 모두 freeze한다.
+        trainable branch는 image feature의 1×1 projection, visible/proposal logits를 함께 받는 3×3 refinement 2개,
+        1×1 output으로 구성된다. residual에는 <code>tanh</code> bound를 적용하고 frozen visible logit에 더한다.
+      </p>
+      <div class="equation">
+        L<sub>amodal</sub> = clip(L<sub>visible</sub>, −16, 16) + 32 · tanh(H(F, L<sub>visible</sub>, L<sub>proposal</sub>))
+      </div>
+      <p>
+        optimizer allowlist는 <code>amodal_residual_head.*</code>만 허용하며 나머지 parameter가 trainable이면 즉시
+        실패한다. frozen SAM3는 BF16 autocast로 실행하고 작은 residual head는 FP32로 계산한다.
+      </p>
+
+      <h4>Loss</h4>
+      <div class="equation">
+        Loss = 5 · Focal(amodal) + 5 · Dice(amodal) + 5 · Visible-Containment
+      </div>
+      <p>
+        IoU regression과 presence loss의 최종 weight는 0이다. containment loss는 visible support에서
+        amodal probability가 frozen visible probability보다 낮아지는 경우를 벌점으로 주어
+        <code>visible ⊆ amodal</code> 관계를 유도한다.
+      </p>
+
+      <h4>최종 학습 설정</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>항목</th><th>값</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr><td>resolution / batch</td><td>1008 / 1</td><td>clip length 8</td></tr>
+            <tr><td>epochs</td><td>20</td><td>checkpoint epoch=20</td></tr>
+            <tr><td>optimizer</td><td>AdamW</td><td>base LR 1e-4 → cosine 1e-5, weight decay 0.01</td></tr>
+            <tr><td>precision</td><td>BF16 AMP + FP32 residual</td><td>gradient clip max norm 0.1</td></tr>
+            <tr><td>augmentation</td><td>consistent flip/affine/resize + color jitter</td><td>anchor box jitter probability 0.5, noise 0.1, bound 20</td></tr>
+            <tr><td>official SAM3</td><td>commit <code>5dd401d…</code></td><td>checkpoint SHA-256 <code>9999e234…</code></td></tr>
+            <tr><td>SAM2 runtime</td><td>commit <code>2b90b9f…</code></td><td>project runtime patch 적용</td></tr>
+            <tr><td>trained checkpoint</td><td>338,435 bytes</td><td>SHA-256 <code>de55f53b5b0b518b2c9be9c8929ebadada7ca5950c5f7729e5bef2e064b4a37f</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Continuous-state amodal inference</h3>
+      <ol class="method-steps">
+        <li>
+          <strong>동일 Gemini prompts.</strong>
+          zero-shot v7과 정확히 같은 plan의 anchor frame/box를 visible bbox mask로 사용한다.
+          baseline mask나 amodal output을 prompt로 사용하지 않는다.
+        </li>
+        <li>
+          <strong>target별 독립 pass.</strong>
+          <code>skip</code> mode에서는 한 frame의 memory를 target별로 생략할 수 있어야 하므로
+          multi-object anchor를 object별 single-object pass로 분리한다.
+        </li>
+        <li>
+          <strong>persistent state.</strong>
+          anchor에서 forward/backward 방향을 각각 별도 <code>TrackingState</code>로 전파한다.
+          8-frame chunk는 backbone feature memory를 제한하는 계산 단위일 뿐, chunk 경계에서 state를 reset하거나
+          re-prompt하지 않는다. 각 pass의 첫 chunk만 Gemini box prompt를 갖는다.
+        </li>
+        <li>
+          <strong>visible-memory skip guard.</strong>
+          visible mask가 non-empty이고 presence probability ≥ 0.5이며 predicted IoU ≥ 0.5일 때만 reliable이다.
+          unreliable non-conditioning frame은 mask memory encoding과 persistent output dictionary 기록을 모두 생략한다.
+          amodal mask는 출력하되 다음 frame의 visible memory를 오염시키지 않는다.
+        </li>
+        <li>
+          <strong>amodal output selection.</strong>
+          여러 anchor가 같은 frame을 예측하면 anchor distance가 가장 가까운 결과를 사용하고,
+          plan segment ±15 안의 non-empty amodal mask를 normalized box로 변환한다.
+          blind test는 모든 source frame을 요구하므로 sparse non-empty 결과를 nearest fill하여 dense track을 만든다.
+        </li>
+      </ol>
+
+      <h3>재현에 필요한 training 코드</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>구분</th><th>파일</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag data">DATA</span></td><td class="path"><a href="../../amodal_train/scripts/build_sailvos_causal_manifests.py">amodal_train/scripts/build_sailvos_causal_manifests.py</a></td><td>shot-aware causal T=1/T=8 manifest 생성</td></tr>
+            <tr><td><span class="tag data">DATA</span></td><td class="path"><a href="../../amodal_train/amodal_train_data/sailvos_mask_reader.py">amodal_train/amodal_train_data/sailvos_mask_reader.py</a>, <a href="../../amodal_train/amodal_train_data/sam2_manifest_dataset.py">sam2_manifest_dataset.py</a></td><td>native visible/amodal mask와 deterministic causal clip loader</td></tr>
+            <tr><td><span class="tag core">MODEL</span></td><td class="path"><a href="../../amodal_train/amodal_train_models/sam3_amodal_tracker.py">amodal_train/amodal_train_models/sam3_amodal_tracker.py</a></td><td>frozen SAM3 wrapper, residual head, persistent state, hold/skip memory guard</td></tr>
+            <tr><td><span class="tag core">LOSS</span></td><td class="path"><a href="../../amodal_train/amodal_train_models/sam3_amodal_loss.py">amodal_train/amodal_train_models/sam3_amodal_loss.py</a></td><td>amodal focal/Dice/IoU/presence/containment 구현</td></tr>
+            <tr><td><span class="tag core">TRAINER</span></td><td class="path"><a href="../../amodal_train/amodal_train_models/sam3_trainer.py">amodal_train/amodal_train_models/sam3_trainer.py</a></td><td>residual-only optimizer allowlist</td></tr>
+            <tr><td><span class="tag data">CONFIG</span></td><td class="path"><a href="../../amodal_train/configs/sam3_sailvos_amodal_base.yaml">sam3_sailvos_amodal_base.yaml</a>, <a href="../../amodal_train/configs/sam3_sailvos_amodal_causal8.yaml">sam3_sailvos_amodal_causal8.yaml</a></td><td>최종 model/data/optimizer/loss/epoch 설정</td></tr>
+            <tr><td><span class="tag run">RUN</span></td><td class="path"><a href="../../amodal_train/scripts/04_train_sam3.sh">amodal_train/scripts/04_train_sam3.sh</a>, <a href="../../amodal_train/scripts/05_gpu_pod_run.sh">05_gpu_pod_run.sh</a></td><td>commit/checkpoint/manifest preflight와 GPU training launcher</td></tr>
+            <tr><td><span class="tag data">PATCH</span></td><td class="path"><a href="../../amodal_train/patches/sam2_amodal_runtime.patch">amodal_train/patches/sam2_amodal_runtime.patch</a></td><td>pinned SAM2 training runtime integration</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>재현에 필요한 inference 코드</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>구분</th><th>파일</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag core">CORE</span></td><td class="path"><a href="../../amodal_train/37flash_versus_60/trained_amodal_replay.py">amodal_train/37flash_versus_60/trained_amodal_replay.py</a></td><td>plan replay, full-frame bidirectional continuous-state, skip guard, amodal box export</td></tr>
+            <tr><td><span class="tag run">RUN</span></td><td class="path"><a href="../../amodal_train/37flash_versus_60/run_test_continuous_skip_multigpu.sh">run_test_continuous_skip_multigpu.sh</a></td><td>compact test shard launcher</td></tr>
+            <tr><td><span class="tag run">MERGE</span></td><td class="path"><a href="../../amodal_train/37flash_versus_60/merge_compact_shards.py">merge_compact_shards.py</a></td><td>resume/shard merge, conflict 및 coverage 검증</td></tr>
+            <tr><td><span class="tag data">MODEL</span></td><td class="path"><a href="../../amodal_train/runs/sam3_sailvos_amodal_residual_v2_shotaware_v3_multiseq_causal8/checkpoints/checkpoint.pt">epoch-20 checkpoint.pt</a></td><td>최종 residual-head checkpoint</td></tr>
+            <tr><td><span class="tag audit">TEST</span></td><td class="path"><a href="../../amodal_train/tests/test_continuous_state_replay.py">tests/test_continuous_state_replay.py</a>, <a href="../../amodal_train/tests/test_sam3_amodal_tracker.py">test_sam3_amodal_tracker.py</a></td><td>persistent-state와 model contract regression</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>학습 및 inference 명령</h3>
+      <pre>cd /workspace/vqa-proj/minseon/amodal_train
+
+<span class="comment"># pinned SAM2/SAM3, official checkpoint, SAIL-VOS raw data와 manifest가 준비된 상태</span>
+AMODAL_NUM_EPOCHS=20 AMODAL_NUM_TRAIN_WORKERS=4 \
+bash scripts/05_gpu_pod_run.sh train-t8
+
+<span class="comment"># 최종 continuous-state + skip test inference</span>
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+export WORKERS_PER_GPU=2
+bash 37flash_versus_60/run_test_continuous_skip_multigpu.sh</pre>
+
+      <h3>최종 fusion과 selective routing</h3>
+      <p>
+        trained output도 Section 2의 동일 sparse predictor와 동일 <code>fuse_dense_sparse.py</code>로 결합했다.
+        validation subset100 공식 scorer에서 dense/fusion 후보를 비교한 결과는 다음과 같다.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>validation subset100 후보</th><th class="num">HOTA</th><th>최종 사용</th></tr></thead>
+          <tbody>
+            <tr><td>pipeline-v7 standalone</td><td class="num">0.5990</td><td>직접 제출하지 않음</td></tr>
+            <tr><td>trained amodal standalone</td><td class="num">0.6263</td><td>직접 제출하지 않음</td></tr>
+            <tr><td>v7 + Gemini sparse</td><td class="num">0.6416</td><td>base branch</td></tr>
+            <tr><td>trained amodal + Gemini sparse</td><td class="num">0.6373</td><td>일반 multi-target 후보</td></tr>
+            <tr><td><strong>selective routed fusion</strong></td><td class="num"><strong>0.6466</strong></td><td><strong>최종 rule</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small">
+        test ground truth score는 사용할 수 없으며 위 값은 validation subset100 결과이다. routing의 +0.00493 개선은
+        일반 multi-target 29문항에서 관찰된 신호에 기반하므로 통계적 불확실성이 있다.
+      </p>
+
+      <div class="equation">
+        use trained-amodal fusion ⇔ (# plan targets &gt; 1) ∧ (question ∉ occlusion-game) ∧ (question ≠ appear-twice)
+      </div>
+      <ul>
+        <li>조건을 만족한 test 504문항은 trained-amodal+Gemini fusion으로 교체.</li>
+        <li>single-target, cup/occlusion-game, appear-twice 등 1,355문항은 v7+Gemini base 보존.</li>
+        <li>trained fusion은 1,857/1,859문항 완료. 3,033 targets가 trusted SAM overlay, 171 targets가 sparse-only.</li>
+        <li>amodal staging에서 normalized width/height가 0.001 미만인 frame 2,290개를 72개 sample 파일에서 제거. 빈 track은 0개.</li>
+      </ul>
+
+      <h4>동일 final routing을 재현하는 핵심 로직</h4>
+      <pre><span class="comment"># base = existing v7+Gemini prediction; amodal = merged trained-amodal+Gemini shards</span>
+for video_id, question_id in test_subset:
+    sample = f"{video_id}_q{question_id}"
+    plan = load_json(plan_root / sample / "multi_anchor_plan.json")
+    question = plan.get("question", "")
+    eligible = (
+        len(plan.get("targets", [])) &gt; 1
+        and "occlusion game" not in question.lower()
+        and question.strip()
+            != "Track the objects shown to the camera more than once."
+    )
+    replacement = amodal[video_id]["grounded_question"].get(question_id)
+    if eligible and replacement is not None:
+        base[video_id]["grounded_question"][question_id] = replacement
+        routed_samples.append(sample)
+
+assert len(routed_samples) == 504
+save_json("predictions.json", base)
+save_json("route_manifest.json", provenance)</pre>
+
+      <div class="callout danger">
+        <strong>정확한 최종 조립을 위해 추가로 보존할 항목.</strong>
+        <code>fuse_dense_sparse.py</code> 외에 질문별 dense staging, near-zero frame filter,
+        fusion shard merge, selective routing을 하나의 checked-in script로 묶어야 완전한 one-command 재현이 된다.
+        현재는 최종 <a href="predictions.json">predictions.json</a>,
+        <a href="route_manifest.json">route_manifest.json</a>, 작업 당시 생성된
+        <span class="path">gemini-plan/sparse-output/results/test_amodal_train_fusion/</span>이 그 provenance를 보존한다.
+      </div>
+
+      <h3>재현성 고정 정보</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>항목</th><th>고정 값</th></tr></thead>
+          <tbody>
+            <tr><td>gemini-plan repository HEAD</td><td><code>4a204d43504a91309496227f4eccb6a428ed0881</code> — 단, 현재 planner 수정본과 sparse-output 파일도 별도 보존 필요</td></tr>
+            <tr><td>amodal_train repository HEAD</td><td><code>8b605a75ed1695004412bc2d029f14f85272c828</code> — <code>37flash_versus_60/</code> 현재 파일 보존 필요</td></tr>
+            <tr><td>SAM3 source</td><td><code>5dd401d1c5c1d5c3eedff06d41b77af824517619</code></td></tr>
+            <tr><td>SAM2 runtime</td><td><code>2b90b9f5ceec907a1c18123530e92e794ad901a4</code> + runtime patch</td></tr>
+            <tr><td>official SAM3 checkpoint</td><td><code>9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e</code></td></tr>
+            <tr><td>trained checkpoint</td><td><code>de55f53b5b0b518b2c9be9c8929ebadada7ca5950c5f7729e5bef2e064b4a37f</code></td></tr>
+            <tr><td>final predictions</td><td><code>688e84e966947bdf47ceb20f504737b4ee43680784815b732c9b3e0339d6d996</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>최종 제출 전 checklist</h3>
+      <ul class="checklist">
+        <li>플랫폼에는 이 디렉터리의 <code>predictions.json</code>만 업로드한다.</li>
+        <li><code>route_manifest.json</code>은 내부 provenance로 보관하되 제출하지 않는다.</li>
+        <li>question coverage가 정확히 1,859인지 검사한다.</li>
+        <li>각 track의 frame ID가 strictly increasing하고 box가 normalized positive XYXY인지 검사한다.</li>
+        <li>최종 SHA-256이 위 값과 일치하는지 확인한다.</li>
+      </ul>
+    </section>
+
+    <footer>
+      This report was reconstructed from the final route manifest, run manifests, saved plans,
+      source code, validation records, and artifact hashes in the shared workspace.
+    </footer>
+  </main>
+</body>
+</html>

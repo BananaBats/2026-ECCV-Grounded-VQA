@@ -1,0 +1,4 @@
+*.json.gz binary
+*.html linguist-documentation
+plans/** linguist-generated
+sparse_predictions/** linguist-generated

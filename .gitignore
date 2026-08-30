@@ -1,0 +1,27 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Local credentials and model/runtime caches
+.env
+*.key
+*credentials*.json
+.gcloud/
+.hf_cache/
+third_party/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+
+# Regenerable heavy outputs
+outputs/
+dataset/
+plans/
+sparse_predictions/
+artifacts/*.json
+!artifacts/input_audit.json
+!artifacts/fusion_final_summary.json
+!artifacts/route_manifest.json
