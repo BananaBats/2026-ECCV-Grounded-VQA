@@ -1,0 +1,468 @@
+{
+  "format_version": 1,
+  "paths": "Packaged paths are relative to the SD-Track root. Historical labels omit machine and account prefixes.",
+  "packaged_file_hashes": "SHA256SUMS",
+  "method_sources": {
+    "original_inference_and_packaged_prompt_schema_hashes": "reproduction/benchmarks/pipeline/source_manifest.json",
+    "original_fusion_and_evaluator_sources": "reproduction/benchmarks/postprocess/source_map.json",
+    "reported_rows_and_recorded_result_digests": "reproduction/benchmarks/experiment_profiles.json",
+    "per_query_original_val200_inputs": "reproduction/data/val200_input_sha256.json"
+  },
+  "analysis_sources": [
+    {
+      "role": "Cohort selection",
+      "historical_source": "src/val200/make_subset.py",
+      "historical_sha256": "692ce949510bce066c8e6ab7c5bdda65455412e4b81e6b2036a1fb03c4145a59",
+      "packaged_file": "reproduction/benchmarks/datasets/make_subset.py",
+      "packaged_sha256": "692ce949510bce066c8e6ab7c5bdda65455412e4b81e6b2036a1fb03c4145a59",
+      "relationship": "Original selection program, unchanged."
+    },
+    {
+      "role": "Ordered validation cohort",
+      "historical_source": "config/val200.tsv",
+      "historical_sha256": "a1bb93ac7a1926e1cf78f7af916d696b71ac1620d4d2b5eaf05155cdf3551da6",
+      "packaged_file": "reproduction/data/perception_val200.tsv",
+      "packaged_sha256": "a1bb93ac7a1926e1cf78f7af916d696b71ac1620d4d2b5eaf05155cdf3551da6",
+      "relationship": "Original ordered query IDs, unchanged."
+    },
+    {
+      "role": "Minimal residual fusion",
+      "historical_source": "src/sparse_fusion/minimal_residual_fusion.py",
+      "historical_sha256": "1991a51a3830d7489cf9032411ac53b11e68e3215d2963be1064418776599be1",
+      "packaged_file": "sdtrack/fusion.py",
+      "packaged_sha256": "f4af22a0629bfe4b677629ea91968ee0ceb78a1c5a20551d0eea431a35fd6896",
+      "relationship": "Standalone implementation used by the demo. Every output track on val200 is checked against its archived digest."
+    },
+    {
+      "role": "Extent ablation",
+      "historical_source": "experiments/perception_amodal_cases/analyze.py",
+      "historical_sha256": "c2d139d850fc4bbe3d6a3430b015a3dcbdff2b184d4f3490800cb1ac75f6d392",
+      "packaged_file": "reproduction/benchmarks/postprocess/controls.py",
+      "packaged_sha256": "f954902b0c97db6472e8a47d7bcdd59242ab3396d9a9df396e2524971e0f54a2",
+      "relationship": "Selected functions for counterfactual correction and fixed support."
+    },
+    {
+      "role": "Shared threshold scoring",
+      "historical_source": "full_grid_001/source_snapshot/run.py",
+      "historical_sha256": "5a4378583b08d4f6565a901fef34bb64918598384d8aac4b85a0ff204bffbc62",
+      "packaged_file": "reproduction/analysis.py",
+      "packaged_sha256": "2532b1f8c8b61670483ba9f8d6e7ed7de42ae5432c82abe5c6c8843722098877",
+      "relationship": "Portable replay groups thresholds that produce identical boxes on annotated frames."
+    },
+    {
+      "role": "1,001-point threshold grid",
+      "historical_source": "full_grid_001/source_snapshot/full_grid.py",
+      "historical_sha256": "53222162d322441e835bb258b017bbe7463e3be199fe523d52f03877869cca54",
+      "packaged_file": "reproduction/analysis.py",
+      "packaged_sha256": "2532b1f8c8b61670483ba9f8d6e7ed7de42ae5432c82abe5c6c8843722098877",
+      "relationship": "Portable replay groups thresholds that produce identical boxes on annotated frames."
+    },
+    {
+      "role": "Shared-threshold bootstrap",
+      "historical_source": "tau_supplementary/analyze_plateau.py",
+      "historical_sha256": "e63476f57ac9edc8c736d79770cb2e0bcc6336740787f21c6b2b3e115254647f",
+      "packaged_file": "reproduction/analysis.py",
+      "packaged_sha256": "2532b1f8c8b61670483ba9f8d6e7ed7de42ae5432c82abe5c6c8843722098877",
+      "relationship": "Pointwise paired video-cluster bootstrap, 5,000 resamples."
+    },
+    {
+      "role": "Two-fold residual holdout",
+      "historical_source": "tau_supplementary/residual/run.py",
+      "historical_sha256": "d747f0ad42e136bc11ccf3b08fa0ab26233f098d9996ad80a15a63528cd9544b",
+      "packaged_file": "reproduction/analysis.py",
+      "packaged_sha256": "2532b1f8c8b61670483ba9f8d6e7ed7de42ae5432c82abe5c6c8843722098877",
+      "relationship": "Portable replay of the fixed-support HOTA curve, raw SAM3 and positive-extent control."
+    },
+    {
+      "role": "Holdout design",
+      "historical_source": "tau_supplementary/residual/protocol.json",
+      "historical_sha256": "b174cd32f44aa960cccc8a79886a0b232a2454b6fe19e0c1e0b6b70a0d920cbb",
+      "packaged_file": "reproduction/PROTOCOL.md",
+      "packaged_sha256": "cd6298ca20f1b6d4cdba5782432017ced892ee3bbfb6fd282ce67a6cd50e953e",
+      "relationship": "Human-readable protocol for the reported threshold experiments."
+    },
+    {
+      "role": "Numerical reference",
+      "historical_source": "tau_supplementary/data/shared_tau_full_curve.csv",
+      "historical_sha256": "cd6cf8b7e1a6a5b457a280b7ac3abb9edf91288e444b1d492451a0b5ac368432",
+      "packaged_file": "reproduction/reference/shared_tau_full_curve.csv",
+      "packaged_sha256": "cd6cf8b7e1a6a5b457a280b7ac3abb9edf91288e444b1d492451a0b5ac368432",
+      "relationship": "Unchanged archived table. The holdout replay checks its four tracking metric columns."
+    },
+    {
+      "role": "Numerical reference",
+      "historical_source": "tau_supplementary/data/residual_holdout_full_curve.csv",
+      "historical_sha256": "bbf987e3ace76b3a6e41fc7891354de49076a23215dfbae76275621f3c994eef",
+      "packaged_file": "reproduction/reference/residual_holdout_full_curve.csv",
+      "packaged_sha256": "bbf987e3ace76b3a6e41fc7891354de49076a23215dfbae76275621f3c994eef",
+      "relationship": "Unchanged archived table. The holdout replay checks its four tracking metric columns."
+    },
+    {
+      "role": "Recorded API cost arithmetic",
+      "historical_source": "experiments/perception_naive30/cost_report.py",
+      "historical_sha256": "14a285e9c8d0aab93085b3db3a9c227dfa17500ccacfee6722d004161fbe2b96",
+      "packaged_file": "reproduction/replay.py",
+      "packaged_sha256": "13ba66463f33ab687ba0995643988963cf7d7fb2a1a06f6831f76eba4d89a56e",
+      "relationship": "Portable Decimal arithmetic on the recorded token ledger at the experimental Standard rates."
+    },
+    {
+      "role": "HC-STVG data adapter",
+      "historical_source": "hc_stvg_project/src/datasets/hcstvg_adapter.py",
+      "historical_sha256": "868708e4fa6b4bad28d9b74b532560ec8a50472413b767dde31d7206070a9f3f",
+      "packaged_file": "reproduction/benchmarks/datasets/hcstvg.py",
+      "packaged_sha256": "b76b356163045106c8d7f538282d21ae2f34930c5a0f0d60ee64f73cf7647cb7",
+      "relationship": "Portable data paths and clip-coordinate conventions."
+    },
+    {
+      "role": "VidSTG data adapter",
+      "historical_source": "vid_stg_project/src/datasets/vidstg_adapter.py",
+      "historical_sha256": "7602da85dd64df50b07b88eed1bace1c3b180441c124db37bc7a2fdd0727fe27",
+      "packaged_file": "reproduction/benchmarks/datasets/vidstg.py",
+      "packaged_sha256": "7602da85dd64df50b07b88eed1bace1c3b180441c124db37bc7a2fdd0727fe27",
+      "relationship": "Portable data paths and clip-coordinate conventions."
+    },
+    {
+      "role": "Recorded token ledger",
+      "historical_source": "usage_counts_anonymized.jsonl",
+      "historical_sha256": "fa5d3bacf395c793f795256b063448895e7c27ded3944cb6016d226e3ac2413c",
+      "packaged_file": "reproduction/data/usage_counts.jsonl.gz",
+      "packaged_sha256": "d98dc27598863a7d13fd5625a37b1b0f806410a207fc938ca6e4d7a2e9955c71",
+      "relationship": "Lossless gzip of the anonymized ledger."
+    },
+    {
+      "role": "Generation and sampling settings",
+      "historical_source": "implementation_details/sampling_audit.json",
+      "historical_sha256": "b00d2071c499c402102d894da4b54f7ccac2bd56ea845cf25d28e90a3ffe2d78",
+      "packaged_file": "reproduction/benchmarks/configs/generation.json",
+      "packaged_sha256": "7b84b72b5ca26bc115885e5595246ecca9706f958bacfdd892619801934d2415",
+      "relationship": "Per-benchmark parameters transcribed from recorded requests and code. Historical unknowns remain marked."
+    },
+    {
+      "role": "Benchmark adapter",
+      "historical_source": "previous_release/pipeline/common.py",
+      "historical_sha256": "0059a4e5c7fee347d15448deed9fe2220f4bd3d4f42b03aa77730adfbc34287a",
+      "packaged_file": "reproduction/benchmarks/pipeline/common.py",
+      "packaged_sha256": "8c92eb5e91f9bc3e4f33a45890aabf8253ab1857c3b50fa4a6946cb6346d073a",
+      "relationship": "Load the recorded configuration for each benchmark."
+    },
+    {
+      "role": "Benchmark adapter",
+      "historical_source": "previous_release/pipeline/plan.py",
+      "historical_sha256": "fd504b0c1f2dcfd9a6ff668aa7db8c48f99b4e73c310bf0ab74c060960be0f46",
+      "packaged_file": "reproduction/benchmarks/pipeline/plan.py",
+      "packaged_sha256": "69b1b8a9030136e42aed45e527e6443f411774bebaf3d5503371e7889220e5fd",
+      "relationship": "Use the selected profile’s planner model by default; CLI overrides remain available."
+    },
+    {
+      "role": "Benchmark adapter",
+      "historical_source": "previous_release/pipeline/sparse.py",
+      "historical_sha256": "7b5cde04e99fd4ce0f6bd9247c34e53a66d621eb46c82e7d6eca79a7ec834829",
+      "packaged_file": "reproduction/benchmarks/pipeline/sparse.py",
+      "packaged_sha256": "f474d5c22d1a6e43b4b78817be1d5ad750f9cb23c281936b006deb07a3317c43",
+      "relationship": "Load the recorded model, box convention and temporal margin. Emit selected frames with consecutive JPEG timestamps."
+    },
+    {
+      "role": "Benchmark configuration",
+      "historical_source": "previous_release/configs/perception.json",
+      "historical_sha256": "24d87cac29b4b9511b38de771df2a74b206459b2d60f60b08c52856683d22088",
+      "packaged_file": "reproduction/benchmarks/configs/perception.json",
+      "packaged_sha256": "24d87cac29b4b9511b38de771df2a74b206459b2d60f60b08c52856683d22088",
+      "relationship": "Includes the recorded planner and sparse model names. See generation.json for request-level evidence."
+    },
+    {
+      "role": "Benchmark configuration",
+      "historical_source": "previous_release/configs/hcstvg.json",
+      "historical_sha256": "88635b57844a236d8f3a117c24225ddc55aa2e4041fe8a381edb2d373199732c",
+      "packaged_file": "reproduction/benchmarks/configs/hcstvg.json",
+      "packaged_sha256": "88635b57844a236d8f3a117c24225ddc55aa2e4041fe8a381edb2d373199732c",
+      "relationship": "Includes the recorded planner and sparse model names. See generation.json for request-level evidence."
+    },
+    {
+      "role": "Benchmark configuration",
+      "historical_source": "previous_release/configs/vidstg.json",
+      "historical_sha256": "7a1278d036431a7e57cd648216df831e0ace997cf546094f702ac04ef1fa5300",
+      "packaged_file": "reproduction/benchmarks/configs/vidstg.json",
+      "packaged_sha256": "7a1278d036431a7e57cd648216df831e0ace997cf546094f702ac04ef1fa5300",
+      "relationship": "Includes the recorded planner and sparse model names. See generation.json for request-level evidence."
+    },
+    {
+      "role": "Benchmark configuration",
+      "historical_source": "previous_release/configs/svag.json",
+      "historical_sha256": "1410ed12ad62e55c3b8875c18d149cdd8cd756597ee013442c922d4e5338807c",
+      "packaged_file": "reproduction/benchmarks/configs/svag.json",
+      "packaged_sha256": "1410ed12ad62e55c3b8875c18d149cdd8cd756597ee013442c922d4e5338807c",
+      "relationship": "Includes the recorded planner and sparse model names. See generation.json for request-level evidence."
+    }
+  ],
+  "frame_maps": {
+    "hcstvg_v1_test": {
+      "queries": 1160,
+      "file": "reproduction/benchmarks/frame_maps/hcstvg_v1_test.json.gz",
+      "dense_grid": "saved",
+      "dense_fallbacks": 0
+    },
+    "hcstvg_v2_val": {
+      "queries": 2000,
+      "file": "reproduction/benchmarks/frame_maps/hcstvg_v2_val.json.gz",
+      "dense_grid": "saved",
+      "dense_fallbacks": 0
+    },
+    "perception_test": {
+      "queries": 1859,
+      "file": "reproduction/benchmarks/frame_maps/perception_test.json.gz",
+      "dense_grid": "reconstructed_from_plan",
+      "dense_fallbacks": 2
+    },
+    "svag_test": {
+      "queries": 1833,
+      "file": "reproduction/benchmarks/frame_maps/svag_test.json.gz",
+      "dense_grid": "saved",
+      "dense_fallbacks": 0
+    },
+    "vidstg_test_declarative": {
+      "queries": 4610,
+      "file": "reproduction/benchmarks/frame_maps/vidstg_test_declarative.json.gz",
+      "dense_grid": "saved",
+      "dense_fallbacks": 85
+    },
+    "perception_val200": {
+      "queries": 200,
+      "file": "reproduction/data/val200_frame_maps.json.gz",
+      "dense_grid": "saved",
+      "dense_fallbacks": 0
+    }
+  },
+  "manuscript_implementation_audit": {
+    "historical_index_sha256": "5484a92d2edfe62297c03b55a8baf3b5db3fe2bcef39228aabb86953a6ef4e72",
+    "entries": [
+      {
+        "source": "previous_release/configs/hcstvg.json",
+        "sha256": "88635b57844a236d8f3a117c24225ddc55aa2e4041fe8a381edb2d373199732c",
+        "role": "packaged benchmark configuration"
+      },
+      {
+        "source": "previous_release/configs/perception.json",
+        "sha256": "24d87cac29b4b9511b38de771df2a74b206459b2d60f60b08c52856683d22088",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "previous_release/configs/svag.json",
+        "sha256": "1410ed12ad62e55c3b8875c18d149cdd8cd756597ee013442c922d4e5338807c",
+        "role": "packaged benchmark configuration"
+      },
+      {
+        "source": "previous_release/configs/vidstg.json",
+        "sha256": "7a1278d036431a7e57cd648216df831e0ace997cf546094f702ac04ef1fa5300",
+        "role": "packaged benchmark configuration"
+      },
+      {
+        "source": "previous_release/prompts/hcstvg_person_action_templates.py.txt",
+        "sha256": "697e9eb5e4a3c478389d08b38248759a3f25a4a9a9f225e5e4aaec9eb4d52858",
+        "role": "packaged complete prompt-function source"
+      },
+      {
+        "source": "previous_release/prompts/hcstvg_planner_functions.py.txt",
+        "sha256": "f6bb957dddfbfcbb3c7510144ca8ccf1c2ae516a634d58c78da8c8424eebd76d",
+        "role": "packaged complete prompt-function source"
+      },
+      {
+        "source": "previous_release/prompts/hcstvg_sparse_functions.py.txt",
+        "sha256": "bb5000501bc08eeb758606413744080b6fb7106007e83e621462ff6e4149f797",
+        "role": "packaged complete prompt-function source"
+      },
+      {
+        "source": "previous_release/prompts/perception_planner_functions.py.txt",
+        "sha256": "a6e2cf796e1b0e4bc7467298445698c47cac74e76bd04aa6566705258d3305a9",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "previous_release/prompts/perception_sparse_functions.py.txt",
+        "sha256": "ad0f6ddccc95bc4714d8bb83a5956fd30d6a49c1dad7dde55e52936e1463a1aa",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "previous_release/prompts/svag_plan_planner_functions.py.txt",
+        "sha256": "52f74c9088ed0c362941e61cf55976b84dc01234c1d3275e3fd8c00e935911f5",
+        "role": "packaged complete prompt-function source"
+      },
+      {
+        "source": "previous_release/prompts/svag_sparse_functions.py.txt",
+        "sha256": "ad0f6ddccc95bc4714d8bb83a5956fd30d6a49c1dad7dde55e52936e1463a1aa",
+        "role": "packaged complete prompt-function source"
+      },
+      {
+        "source": "previous_release/prompts/vidstg_planner_functions.py.txt",
+        "sha256": "13996fda872c2488eb448ff6221aeb52d15b47f6f11da0681cecbc9e86e1e18a",
+        "role": "packaged complete prompt-function source"
+      },
+      {
+        "source": "previous_release/prompts/vidstg_sparse_functions.py.txt",
+        "sha256": "241f2fd0a8ff088d3b6e9cf3e7937c09b85a523158557469bbcd7d3ea15f7da2",
+        "role": "packaged complete prompt-function source"
+      },
+      {
+        "source": "previous_release/pipeline/source_manifest.json",
+        "sha256": "e2219797b42a7d4cc95eae22f11a909d9f36c8bb8e14f7a91d3c4d4c1ead6747",
+        "role": "original and packaged source SHA256 mapping"
+      },
+      {
+        "source": "previous_release/postprocess/metrics/__init__.py",
+        "sha256": "b91e912cdc514588f144100657e8dc5053c17d632980b2c3461046a3991dc88c",
+        "role": "packaged evaluation implementation"
+      },
+      {
+        "source": "previous_release/postprocess/metrics/perception_eval.py",
+        "sha256": "74efae40dfecd8e5f6f78ba6281e127f01ed219215e54bfe41d32e30fe8974da",
+        "role": "packaged evaluation implementation"
+      },
+      {
+        "source": "previous_release/postprocess/metrics/perception_hota.py",
+        "sha256": "381e2d4d779d3477f833407598badc1631a545f90631d00a0c396dc0038b452d",
+        "role": "packaged evaluation implementation"
+      },
+      {
+        "source": "previous_release/postprocess/metrics/stvg_eval.py",
+        "sha256": "3aa90229b14dd37c1128dcbb2a65259a7242967e4903bc981c139353f3519c63",
+        "role": "packaged evaluation implementation"
+      },
+      {
+        "source": "previous_release/postprocess/metrics/stvg_hota.py",
+        "sha256": "bb2070e3db369c6f4d1cd9fda07aa9bb14b0636737f4179826e920ba6623211e",
+        "role": "packaged evaluation implementation"
+      },
+      {
+        "source": "experiment/outputs/perception/val200_fusion_system_comparison_20261120/source_snapshot/evaluator/eval_hota.py",
+        "sha256": "5c57594110aeb15c5a588d981d92c73d02f41ba64df499fcd8eb6e8ddc599172",
+        "role": "executed evaluator/exporter snapshot"
+      },
+      {
+        "source": "experiment/outputs/perception/val200_fusion_system_comparison_20261120/source_snapshot/evaluator/hota.py",
+        "sha256": "381e2d4d779d3477f833407598badc1631a545f90631d00a0c396dc0038b452d",
+        "role": "executed evaluator/exporter snapshot"
+      },
+      {
+        "source": "experiment/outputs/hcstvg/single_tau03_20261113/hcstvg_v1_test/source_snapshot/hcstvg/src/datasets/vidstg_export.py",
+        "sha256": "16451f301c455841ce61b34db097e521671e81d60c6882d52a6f57ac4654eaf2",
+        "role": "executed evaluator/exporter snapshot"
+      },
+      {
+        "source": "experiment/outputs/hcstvg/single_tau03_20261113/hcstvg_v1_test/source_snapshot/hcstvg/src/eval/hota.py",
+        "sha256": "bb2070e3db369c6f4d1cd9fda07aa9bb14b0636737f4179826e920ba6623211e",
+        "role": "executed evaluator/exporter snapshot"
+      },
+      {
+        "source": "experiment/outputs/hcstvg/single_tau03_20261113/hcstvg_v1_test/source_snapshot/hcstvg/src/eval/vidstg_eval.py",
+        "sha256": "518603de82160635b36a7d1b912465ebefdcdddadde89d65ff92066f93405b14",
+        "role": "executed evaluator/exporter snapshot"
+      },
+      {
+        "source": "experiment/outputs/hcstvg/single_tau03_20261113/hcstvg_v2_val/source_snapshot/hcstvg/src/datasets/vidstg_export.py",
+        "sha256": "16451f301c455841ce61b34db097e521671e81d60c6882d52a6f57ac4654eaf2",
+        "role": "executed evaluator/exporter snapshot"
+      },
+      {
+        "source": "experiment/outputs/hcstvg/single_tau03_20261113/hcstvg_v2_val/source_snapshot/hcstvg/src/eval/hota.py",
+        "sha256": "bb2070e3db369c6f4d1cd9fda07aa9bb14b0636737f4179826e920ba6623211e",
+        "role": "executed evaluator/exporter snapshot"
+      },
+      {
+        "source": "experiment/outputs/hcstvg/single_tau03_20261113/hcstvg_v2_val/source_snapshot/hcstvg/src/eval/vidstg_eval.py",
+        "sha256": "518603de82160635b36a7d1b912465ebefdcdddadde89d65ff92066f93405b14",
+        "role": "executed evaluator/exporter snapshot"
+      },
+      {
+        "source": "vidstg/outputs/vidstg_test/final_eval_20261110/config.json",
+        "sha256": "e8028408a530efe5851d734f02de1bce92ff2d476557d8660ed783a0bca63a36",
+        "role": "run protocol and recorded source bindings"
+      },
+      {
+        "source": "experiment/outputs/hcstvg/single_tau03_20261113/summary.json",
+        "sha256": "8e4b291a385d1c851663bd91fde5c07077f668eeb0eee4594bed5175a4f2b7c1",
+        "role": "run protocol and recorded source bindings"
+      },
+      {
+        "source": "perception_run/src/val200/make_subset.py",
+        "sha256": "692ce949510bce066c8e6ab7c5bdda65455412e4b81e6b2036a1fb03c4145a59",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "perception_run/config/val200.tsv",
+        "sha256": "a1bb93ac7a1926e1cf78f7af916d696b71ac1620d4d2b5eaf05155cdf3551da6",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "perception_run/config/val200_meta.json",
+        "sha256": "4f52fa2f9dd600912b82915a73736f6e0f6c77fbbf4887b65122c91a9a847f82",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "perception_run/scripts/val200_env.sh",
+        "sha256": "81f66c4eea262ea8f830817859838d64c8183d73b8e94fb12962d64aa62269fc",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "perception_run/src/val200/plan_complete.py",
+        "sha256": "43d6391fbe3aad92d5ccc0b872bc55f1409d6ce8bbe5d7f32d088118ea738174",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "perception_run/src/val200/b_complete.py",
+        "sha256": "dd3858bbe6a9c2feb0e7762895890b60c22d59aee09c98dcc316a0e9cf0cd1ac",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "perception_run/src/val200/batch_gemini.py",
+        "sha256": "807d56a65a3b35ee6d81dea109e966b98fda7f498945ddb8fc856fab98fde9d8",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "previous_release/configs/perception_val200.tsv",
+        "sha256": "a1bb93ac7a1926e1cf78f7af916d696b71ac1620d4d2b5eaf05155cdf3551da6",
+        "role": "packaged original query IDs"
+      },
+      {
+        "source": "previous_release/results/experiment_profiles.json",
+        "sha256": "4dc1032260d319ad24a3f6bc237b9dbe01b0d2e7451d4694cc2afaebc191652d",
+        "role": "val200 original/reproduction source"
+      },
+      {
+        "source": "experiment/outputs/paper_review_20261123/implementation_details/val200_queries.tsv",
+        "sha256": "a1bb93ac7a1926e1cf78f7af916d696b71ac1620d4d2b5eaf05155cdf3551da6",
+        "role": "exact ordered query IDs"
+      },
+      {
+        "source": "experiment/outputs/paper_review_20261123/implementation_details/sampling_audit.json",
+        "sha256": "b00d2071c499c402102d894da4b54f7ccac2bd56ea845cf25d28e90a3ffe2d78",
+        "role": "per-benchmark source and line references"
+      },
+      {
+        "source": "experiment/outputs/paper_review_20261123/implementation_details/evaluation_failures_audit.json",
+        "sha256": "ffa4646496bcea7d2e5b4ba24d3bb6bb331d28327d0403f5ee5667488e7e0178",
+        "role": "count, evaluator, exception source references"
+      }
+    ]
+  },
+  "external_software": {
+    "SVAGEval": {
+      "repository": "https://github.com/Shuaicong97/SVAGEval",
+      "git_commit": "65b14956083db0541917cf92c2ceca3b11c09ee2",
+      "packaged_file": "reproduction/benchmarks/SVAGEval-65b1495.tar.gz",
+      "contents": "Git archive of the evaluation source, TrackEval dependency and licenses."
+    },
+    "SAM3": {
+      "repository": "https://github.com/facebookresearch/sam3",
+      "recorded_source_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66",
+      "scope": "The SVAG run records this checkpoint digest. Per-run bindings for earlier benchmarks are described in configs/generation.json.",
+      "recorded_checkpoint": "sam3.pt",
+      "recorded_checkpoint_sha256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e"
+    }
+  },
+  "demo": {
+    "entrypoint": "demo.py",
+    "target_policy": "sdtrack/planning.py",
+    "default_for_custom_video": "query",
+    "default_for_bundled_example": "object",
+    "archived_benchmark_prompts": "reproduction/benchmarks/pipeline/_legacy",
+    "scope": "The generic live planner is a reviewer-facing adaptation. Benchmark profiles retain their original task-conditioned prompts."
+  }
+}

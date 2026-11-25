@@ -1,0 +1,29 @@
+{
+  "planning_profile": "svag",
+  "planner_video_fps": 4,
+  "proxy_max_frames": 192,
+  "proxy_max_dimension": 512,
+  "anchor_target_fps": 3,
+  "low_FPS_all_frames_threshold": 5,
+  "max_anchor_frames": 3,
+  "dense_target_fps": 10,
+  "boundary_radius_seconds": 0.5,
+  "segment_gate_margin_seconds": 0.5,
+  "sparse_target_fps": 1,
+  "sparse_frames_per_call": 8,
+  "max_object_frames_per_sparse_call": 64,
+  "sparse_box_mode": "amodal",
+  "note": "Final completed FPS-aware SVAG campaign uses a nominal three-anchor budget, with the four recorded GT-free coverage recovery exceptions listed below. Older exploratory campaigns are not the source of this profile.",
+  "planner_model": "gemini-3.7-flash",
+  "sparse_model": "gemini-3.7-flash",
+  "recovery_exceptions": {
+    "soft_three_anchor_limit": true,
+    "historical_above_cap_samples": {
+      "video_3_q1006": 19,
+      "video_6_q874": 4,
+      "video_140_q5138": 4,
+      "video_140_q5583": 4
+    },
+    "reason": "Preserve all model-selected targets when three anchors cannot initialize every identity; GT-free recovery."
+  }
+}

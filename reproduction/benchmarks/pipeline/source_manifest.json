@@ -1,0 +1,281 @@
+[
+  {
+    "destination": "pipeline/_legacy/batch_cloud.py",
+    "source_sha256": "335c3e01f2cffa3e70378c55d60acc53518ec5ec6f4299d940f9296228c15630",
+    "packaged_sha256": "335c3e01f2cffa3e70378c55d60acc53518ec5ec6f4299d940f9296228c15630",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/direct_amodal/core.py",
+    "source_sha256": "cd84e8a2cda8b292eb70dc55d86f103d68202a68fa11e093ba5d57f442859240",
+    "packaged_sha256": "cd84e8a2cda8b292eb70dc55d86f103d68202a68fa11e093ba5d57f442859240",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/direct_amodal/run.py",
+    "source_sha256": "303c3491a41cbc43bbe2b4eb0932c05642de17c18ac55933a34b686a209f4fcd",
+    "packaged_sha256": "efdca73f93fdabc1a031ad326bcc2d6701c255a060bcdfb25f343f76078dbf33",
+    "edits": [
+      "Rebased local core import",
+      "Removed account/project constants and account-specific manifest authorization",
+      "Uses caller-owned standard ADC; removed account identity probe only",
+      "Set consecutive JPEG output timestamps after frame selection. This preserves the source frames across FFmpeg versions, including versions without the legacy vsync option."
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/hcstvg/box_baseline.py",
+    "source_sha256": "ba8f16d7fd322eabe7a2c2bf74034584960b23766ed8e9ed65b599bce888936b",
+    "packaged_sha256": "3671efe38ca296c32fc3c07f86c0e7aee90ad3e43cd8df7491f2dc22d92fcf0d",
+    "edits": [
+      "Anonymized an unused environment-variable name"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/hcstvg/hcstvg_prompts.py",
+    "source_sha256": "697e9eb5e4a3c478389d08b38248759a3f25a4a9a9f225e5e4aaec9eb4d52858",
+    "packaged_sha256": "697e9eb5e4a3c478389d08b38248759a3f25a4a9a9f225e5e4aaec9eb4d52858",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/hcstvg/multi_anchor_box_baseline.py",
+    "source_sha256": "227b942ad7013980385e762abd29df6002f8474e59f4abfad8487adfb2150bf3",
+    "packaged_sha256": "464c3a7099d9b341126a3959fb9847bdf6665baa85bc72cfb9128e2761be6fd0",
+    "edits": [
+      "Removed historical machine-specific process-group stop switch"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/hcstvg_batch/batch_plan.py",
+    "source_sha256": "8b35bc361fe7385c6fd382cf73fb36697ace0ad0c5917214e6ea58830ade4ab2",
+    "packaged_sha256": "32d09a7e0edd7c7c6a7c10c6c2ba127cdd6248646e7f26f2baa791e67b13c0a0",
+    "edits": [
+      "Changed default local release root to current directory",
+      "Use the portable environment variable name expected by the packaged HC-STVG loader."
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/hcstvg_sparse/generate_sparse.py",
+    "source_sha256": "3c0fc36692876d177d0606cadc4210b67b118373af5637c5e28b62c9db5f8622",
+    "packaged_sha256": "5a9bd7538c3f91d0dc81387038489469b44205642dcc58ff2561cfa77c8b36c8",
+    "edits": [
+      "Set consecutive JPEG output timestamps after frame selection. This preserves the source frames across FFmpeg versions, including versions without the legacy vsync option."
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/hcstvg_sparse/sparse_common.py",
+    "source_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+    "packaged_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/perception/box_baseline.py",
+    "source_sha256": "b06746d38a5927451f37b04f79c9ac77f07a2a195dbc7f3a360274c776802194",
+    "packaged_sha256": "b111f3ca685c52d562120c98e0766cd31ad1f93fe8628ad498ec4674745cb3e3",
+    "edits": [
+      "Anonymized an unused environment-variable name"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/perception/multi_anchor_box_baseline.py",
+    "source_sha256": "b5f816742d316e6ada30abfb2addd7465ab00071f8785d85fab1921126f07a44",
+    "packaged_sha256": "b5f816742d316e6ada30abfb2addd7465ab00071f8785d85fab1921126f07a44",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/perception_sparse/generate_sparse.py",
+    "source_sha256": "d6f75da00ae5d08f1e355d7a8e803de7193d528ad3a3f82e9cb8a68ee0ee6e68",
+    "packaged_sha256": "0996c5dc53ecc9b3c9667e7abff3fc49452cb80df9dec0a71215b743b64942f6",
+    "edits": [
+      "Set consecutive JPEG output timestamps after frame selection. This preserves the source frames across FFmpeg versions, including versions without the legacy vsync option."
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/perception_sparse/sparse_common.py",
+    "source_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+    "packaged_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/svag_dense/box_baseline.py",
+    "source_sha256": "b06746d38a5927451f37b04f79c9ac77f07a2a195dbc7f3a360274c776802194",
+    "packaged_sha256": "b111f3ca685c52d562120c98e0766cd31ad1f93fe8628ad498ec4674745cb3e3",
+    "edits": [
+      "Anonymized an unused environment-variable name"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/svag_dense/multi_anchor_box_baseline.py",
+    "source_sha256": "74a6fcfe8f70cad23d3d64add0f386519d9918d88b798d537d3fbfb440b34b55",
+    "packaged_sha256": "74a6fcfe8f70cad23d3d64add0f386519d9918d88b798d537d3fbfb440b34b55",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/svag_plan/box_baseline.py",
+    "source_sha256": "b06746d38a5927451f37b04f79c9ac77f07a2a195dbc7f3a360274c776802194",
+    "packaged_sha256": "b111f3ca685c52d562120c98e0766cd31ad1f93fe8628ad498ec4674745cb3e3",
+    "edits": [
+      "Anonymized an unused environment-variable name"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/svag_plan/multi_anchor_box_baseline.py",
+    "source_sha256": "d52d561b533337af20c0b8ba8ac2cf07e0725f341f48567441f980d81d487ebd",
+    "packaged_sha256": "d52d561b533337af20c0b8ba8ac2cf07e0725f341f48567441f980d81d487ebd",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/svag_repair/extend_inputs_reference.py.txt",
+    "source_sha256": "19430c63ba47e87667ed76756cb53798bfc445795ad552231371dfc2080bbc18",
+    "packaged_sha256": "3c657d0a1a5c8d5b139cb3544dd6cf55ffa2b2dc836b305646ea7a9f8b871936",
+    "edits": [
+      "Retained input-extension source reference; configurable experiment root"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/svag_repair/headless_worker.py",
+    "source_sha256": "cfc553b112b20d52ae0911071d2a7560cf79af66f1ddf0d1374c6ec24cbfb872",
+    "packaged_sha256": "1ba922e411b0682e75e8f697e5be8b1ebdba340ec39d1dd1d50f6dbb0df4b292",
+    "edits": [
+      "Remove the workstation owner from the module description."
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/svag_repair/historical_recovery.py",
+    "source_sha256": "3cd78adbb8584d7b63334b5b81508dc3699275f86b656bbed3ba3c095edbd535",
+    "packaged_sha256": "1c8354771da5de8bcd0cedf6c72dd54cb76ed72e2890ac85599908f54d7d6da9",
+    "edits": [
+      "Retained original scientific recovery functions; caller supplies client/project; omitted account verification and campaign controller"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/svag_repair/recovery_calls.py",
+    "source_sha256": "3a6ad6a5c0035d3b1166eb0c06fd7acf891f0b71981cb3c8c0fcbda9383b25a8",
+    "packaged_sha256": "3a6ad6a5c0035d3b1166eb0c06fd7acf891f0b71981cb3c8c0fcbda9383b25a8",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/svag_sparse/generate_sparse.py",
+    "source_sha256": "d6f75da00ae5d08f1e355d7a8e803de7193d528ad3a3f82e9cb8a68ee0ee6e68",
+    "packaged_sha256": "0996c5dc53ecc9b3c9667e7abff3fc49452cb80df9dec0a71215b743b64942f6",
+    "edits": [
+      "Set consecutive JPEG output timestamps after frame selection. This preserves the source frames across FFmpeg versions, including versions without the legacy vsync option."
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/svag_sparse/sparse_common.py",
+    "source_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+    "packaged_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/_legacy/vidstg/box_baseline.py",
+    "source_sha256": "b06746d38a5927451f37b04f79c9ac77f07a2a195dbc7f3a360274c776802194",
+    "packaged_sha256": "b111f3ca685c52d562120c98e0766cd31ad1f93fe8628ad498ec4674745cb3e3",
+    "edits": [
+      "Anonymized an unused environment-variable name"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/vidstg/multi_anchor_box_baseline.py",
+    "source_sha256": "3882cebaa29b1d7c19df13c61ac14f6c4d6ac0a9d61531af51a0e554d4d552e3",
+    "packaged_sha256": "c10fdceab0f9d0ef759b9c34488e728514cae035cb71b72dde97308cd6bac097",
+    "edits": [
+      "Removed historical machine-specific process-group stop switch"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/vidstg_batch/batch_plan.py",
+    "source_sha256": "ae3ab2b3c8e5e9807abf6c8edfe444ecd928a072a1f2402517363655f976c6ac",
+    "packaged_sha256": "24f1b5cbd004034f02cb59d8e12c86ed47199827ae32514519073d064d22b8d7",
+    "edits": [
+      "Changed default local release root to current directory"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/vidstg_batch/batch_sparse.py",
+    "source_sha256": "a425c5d0ef3252542bede0f9dae472f17050215999401dd1dfde9a7a0b86e93f",
+    "packaged_sha256": "a537217459c7bb696cbe94ced91187437a7d32d5d07b4f9ba0cb32c5a319b994",
+    "edits": [
+      "Changed default local release root to current directory",
+      "Set consecutive JPEG output timestamps after frame selection. This preserves the source frames across FFmpeg versions, including versions without the legacy vsync option."
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/vidstg_dense/box_baseline.py",
+    "source_sha256": "b06746d38a5927451f37b04f79c9ac77f07a2a195dbc7f3a360274c776802194",
+    "packaged_sha256": "b111f3ca685c52d562120c98e0766cd31ad1f93fe8628ad498ec4674745cb3e3",
+    "edits": [
+      "Anonymized unused environment-variable name"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/vidstg_dense/multi_anchor_box_baseline.py",
+    "source_sha256": "325089319d2acad5f3880bc91da56d3b703938ac6d5676cfdff8268f6b14397d",
+    "packaged_sha256": "c4cbc6251e8c053ef08107319253e4c179877912d4fd5f7ca9a101c4a9363b30",
+    "edits": [
+      "Removed historical machine-specific stop switch"
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/vidstg_sparse/generate_sparse.py",
+    "source_sha256": "58c52f4f12ea38c73f8568a7931d2bcf8df5a6b1519af9b54728f197170803cf",
+    "packaged_sha256": "8179c2e1e4a1dd2c0360623cdb4840f3f206378f85d60842229410d397b8c9b2",
+    "edits": [
+      "Set consecutive JPEG output timestamps after frame selection. This preserves the source frames across FFmpeg versions, including versions without the legacy vsync option."
+    ]
+  },
+  {
+    "destination": "pipeline/_legacy/vidstg_sparse/sparse_common.py",
+    "source_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+    "packaged_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/batch_schema.py",
+    "source_sha256": "ae3ab2b3c8e5e9807abf6c8edfe444ecd928a072a1f2402517363655f976c6ac",
+    "packaged_sha256": "d2c9f960f301cd2cfddbb247a6a746bab3f429f7ff00834a74562fdec0b721d7",
+    "edits": [
+      "Extracted original local schema expansion unchanged"
+    ]
+  },
+  {
+    "destination": "pipeline/prepare_svag.py",
+    "source_sha256": "b7ba483eb450f1337dcfa357b90d34b81b4dfb602f5325802c2577de712bec54",
+    "packaged_sha256": "b7ba483eb450f1337dcfa357b90d34b81b4dfb602f5325802c2577de712bec54",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/sampling_sparse.py",
+    "source_sha256": "8b814acbb4679dadebdb66b64eaea257e8f7011e9d532ac59adfa044ebf08332",
+    "packaged_sha256": "ac94ef9fbef4ee11ee0825607be0d92ba1dd661ba2f02ee8f37fb05a1bdd61ca",
+    "edits": [
+      "Extracted original native_grid, _visible, coverage_schedule functions unchanged"
+    ]
+  },
+  {
+    "destination": "pipeline/sampling_vidstg.py",
+    "source_sha256": "a425c5d0ef3252542bede0f9dae472f17050215999401dd1dfde9a7a0b86e93f",
+    "packaged_sha256": "44da325b2ae92e836103531e84184fbb2f2e9d0b85ee23c27a2b2fb798b5f3c6",
+    "edits": [
+      "Extracted original sample_frames function unchanged"
+    ]
+  },
+  {
+    "destination": "pipeline/svag_dense_sampling.py",
+    "source_sha256": "e79ebc0ae713eb455c21675de8474f8dcfa1abec1588a0552658b187c0ba89a8",
+    "packaged_sha256": "e79ebc0ae713eb455c21675de8474f8dcfa1abec1588a0552658b187c0ba89a8",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/svag_fps_sampling.py",
+    "source_sha256": "2aa4ca677d5d2a1f9c6147431724a62720c16072423cc472464fe6af71533ff5",
+    "packaged_sha256": "2aa4ca677d5d2a1f9c6147431724a62720c16072423cc472464fe6af71533ff5",
+    "edits": []
+  },
+  {
+    "destination": "pipeline/svag_repair.py",
+    "source_sha256": "b7850b4a06776a34756ec898a9cf67468b59470c94b188ebd60b6a743e75ddf2",
+    "packaged_sha256": "b7850b4a06776a34756ec898a9cf67468b59470c94b188ebd60b6a743e75ddf2",
+    "edits": []
+  }
+]

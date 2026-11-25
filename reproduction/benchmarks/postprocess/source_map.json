@@ -1,0 +1,128 @@
+{
+  "purpose": "Original experiment source provenance, without local account or machine paths. Adaptation replaces imports/default paths and anonymizes one historical comment; numeric function bodies remain unchanged.",
+  "files": [
+    {
+      "original": "experiment_project/src/sparse_fusion/sparse_common.py",
+      "destination": "postprocess/legacy/sparse_common.py",
+      "original_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+      "packaged_sha256": "74ffac8e7379a14c2e829038d64294b7d016fc0568502515deea621a320904d4",
+      "replacements": []
+    },
+    {
+      "original": "experiment_project/src/sparse_fusion/fuse_dense_sparse.py",
+      "destination": "postprocess/legacy/fuse_dense_sparse.py",
+      "original_sha256": "21840cd63a8fc9942797761ff57fa26735a0af8eba21743bfe34908c898dd3ed",
+      "packaged_sha256": "97f39f2e85dfe12f33f0e351058d0f92108dc42133f5231bee0e9d7982dc5ba9",
+      "replacements": [
+        [
+          "from sparse_common import (",
+          "from .sparse_common import ("
+        ],
+        [
+          "original v13 label",
+          "historical v13"
+        ]
+      ]
+    },
+    {
+      "original": "experiment_project/src/sparse_fusion/minimal_residual_fusion.py",
+      "destination": "postprocess/reference/minimal_residual_fusion.py",
+      "original_sha256": "1991a51a3830d7489cf9032411ac53b11e68e3215d2963be1064418776599be1",
+      "packaged_sha256": "1991a51a3830d7489cf9032411ac53b11e68e3215d2963be1064418776599be1",
+      "replacements": []
+    },
+    {
+      "original": "experiment_project/src/sparse_fusion/minimal_residual_fusion.py",
+      "destination": "postprocess/core.py",
+      "original_sha256": "1991a51a3830d7489cf9032411ac53b11e68e3215d2963be1064418776599be1",
+      "packaged_sha256": "70a5c49ce8c7ce6032622243234938ed6cb5ddc5604a85e0543a05152d504bb6",
+      "replacements": [
+        [
+          "from sparse_common import (",
+          "from .legacy.sparse_common import ("
+        ],
+        [
+          "from fuse_dense_sparse import (",
+          "from .legacy.fuse_dense_sparse import ("
+        ]
+      ]
+    },
+    {
+      "original": "hc_stvg_project/src/datasets/vidstg_export.py",
+      "destination": "postprocess/legacy/stvg_export.py",
+      "original_sha256": "16451f301c455841ce61b34db097e521671e81d60c6882d52a6f57ac4654eaf2",
+      "packaged_sha256": "16451f301c455841ce61b34db097e521671e81d60c6882d52a6f57ac4654eaf2",
+      "replacements": []
+    },
+    {
+      "original": "hc_stvg_project/src/eval/hota.py",
+      "destination": "postprocess/metrics/stvg_hota.py",
+      "original_sha256": "bb2070e3db369c6f4d1cd9fda07aa9bb14b0636737f4179826e920ba6623211e",
+      "packaged_sha256": "bb2070e3db369c6f4d1cd9fda07aa9bb14b0636737f4179826e920ba6623211e",
+      "replacements": []
+    },
+    {
+      "original": "hc_stvg_project/src/eval/vidstg_eval.py",
+      "destination": "postprocess/metrics/stvg_eval.py",
+      "original_sha256": "518603de82160635b36a7d1b912465ebefdcdddadde89d65ff92066f93405b14",
+      "packaged_sha256": "3aa90229b14dd37c1128dcbb2a65259a7242967e4903bc981c139353f3519c63",
+      "replacements": [
+        [
+          "import hota  # noqa: E402",
+          "from . import stvg_hota as hota  # noqa: E402"
+        ]
+      ]
+    },
+    {
+      "original": "experiment_project/outputs/perception/val200_fusion_simplify_20261107/source_snapshot/src/val200/hota.py",
+      "destination": "postprocess/metrics/perception_hota.py",
+      "original_sha256": "381e2d4d779d3477f833407598badc1631a545f90631d00a0c396dc0038b452d",
+      "packaged_sha256": "381e2d4d779d3477f833407598badc1631a545f90631d00a0c396dc0038b452d",
+      "replacements": []
+    },
+    {
+      "original": "experiment_project/outputs/perception/val200_fusion_simplify_20261107/source_snapshot/src/val200/eval_hota.py",
+      "destination": "postprocess/metrics/perception_eval.py",
+      "original_sha256": "5c57594110aeb15c5a588d981d92c73d02f41ba64df499fcd8eb6e8ddc599172",
+      "packaged_sha256": "74efae40dfecd8e5f6f78ba6281e127f01ed219215e54bfe41d32e30fe8974da",
+      "replacements": [
+        [
+          "from hota import eval_sequence  # noqa: E402",
+          "from .perception_hota import eval_sequence  # noqa: E402"
+        ],
+        [
+          "default=DEFAULT_ANNOTATIONS",
+          "required=True"
+        ],
+        [
+          "default=DEFAULT_SUBSET",
+          "required=True"
+        ]
+      ]
+    },
+    {
+      "original": "experiment_project/scripts/svag_official_submission.py",
+      "destination": "postprocess/svag_schema.py",
+      "original_sha256": "17faf97a4670dc9ad615c898215dd8df190f4dcf3687cbec80a804776fffca0b",
+      "packaged_sha256": "17faf97a4670dc9ad615c898215dd8df190f4dcf3687cbec80a804776fffca0b",
+      "replacements": []
+    },
+    {
+      "original": "experiment_project/third_party/SVAGEval/TrackEval/LICENSE",
+      "destination": "postprocess/licenses/TrackEval.txt",
+      "original_sha256": "f7e548c5729e464d878dd4abf691e323bbea028a756d08395d88b83e43dd2d86",
+      "packaged_sha256": "f7e548c5729e464d878dd4abf691e323bbea028a756d08395d88b83e43dd2d86",
+      "replacements": []
+    },
+    {
+      "original": "experiment_project/experiments/perception_amodal_cases/analyze.py",
+      "destination": "postprocess/controls.py",
+      "original_sha256": "c2d139d850fc4bbe3d6a3430b015a3dcbdff2b184d4f3490800cb1ac75f6d392",
+      "retained_functions": [
+        "counterfactual_correction",
+        "fixed_support"
+      ],
+      "packaged_sha256": "f954902b0c97db6472e8a47d7bcdd59242ab3396d9a9df396e2524971e0f54a2"
+    }
+  ]
+}

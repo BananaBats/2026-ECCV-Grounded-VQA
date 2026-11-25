@@ -1,0 +1,17 @@
+{
+  "planning_profile": "perception",
+  "planner_video_fps": 4,
+  "proxy_max_frames": 192,
+  "proxy_max_dimension": 512,
+  "anchor_stride": 10,
+  "max_anchor_frames": 3,
+  "dense_stride": 3,
+  "boundary_radius": 15,
+  "segment_gate_margin": 15,
+  "sparse_frame_stride": 30,
+  "sparse_frames_per_call": 8,
+  "sparse_box_mode": "amodal",
+  "note": "Source revisions and fusion profiles differ between the historical test result and validation ablations. Consult experiment registry; this configuration is not a claim of identical reported-row regeneration.",
+  "planner_model": "gemini-3.7-flash",
+  "sparse_model": "gemini-3.7-flash"
+}

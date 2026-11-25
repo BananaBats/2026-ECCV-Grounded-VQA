@@ -1,0 +1,8 @@
+# CPU planning / sparse / Gemini Direct environment; separate from SAM3 GPU env.
+google-genai==2.19.0
+google-auth==2.62.0
+requests==2.34.2
+pydantic==2.14.1
+numpy==2.4.6
+opencv-python-headless==4.14.0.94
+Pillow==12.3.0

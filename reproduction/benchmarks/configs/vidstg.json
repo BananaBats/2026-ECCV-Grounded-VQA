@@ -1,0 +1,16 @@
+{
+  "planning_profile": "vidstg",
+  "anchor_stride": 10,
+  "max_anchor_frames": 3,
+  "boundary_radius": 15,
+  "segment_gate_margin": 15,
+  "sparse_grounding_margin": -1,
+  "sparse_box_mode": "visible",
+  "question_scope": "Declarative test questions, 4610 total; 4525 paired fusion and 85 dense fallbacks in the later paired study.",
+  "planner_model": "gemini-3.8-flash",
+  "sparse_model": "gemini-3.8-flash",
+  "sparse_target_fps": 1.0,
+  "dense_target_fps": 10.0,
+  "timestamp_rounding": "floor(k*source_fps/target_fps+0.5)",
+  "dense_sparse_frame_overlap_required": true
+}

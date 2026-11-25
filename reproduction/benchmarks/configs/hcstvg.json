@@ -1,0 +1,15 @@
+{
+  "planning_profile": "hcstvg",
+  "anchor_stride": 10,
+  "max_anchor_frames": 3,
+  "dense_stride": 3,
+  "boundary_radius": 15,
+  "segment_gate_margin": 15,
+  "sparse_frame_stride": 30,
+  "sparse_grounding_margin": 30,
+  "sparse_box_mode": "amodal",
+  "action_window": "predicted grounding_segment; never GT interval",
+  "note": "The amodal prompt is an inference choice; no claim that all dataset annotations are amodal.",
+  "planner_model": "gemini-3.8-flash",
+  "sparse_model": "gemini-3.8-flash"
+}

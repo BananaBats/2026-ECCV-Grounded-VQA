@@ -1,0 +1,345 @@
+#!/usr/bin/env python3
+"""Register recovered plans in an unstarted FPS-aware SAM3 experiment.
+
+The original successful plan/map bytes and frozen tracking implementation are
+preserved. This command performs no Gemini, GT, or GPU calls. It accepts exactly
+the blocked sample set, validates each completed recovery, and writes all new
+inputs before atomically replacing the registered experiment manifest.
+"""
+from __future__ import annotations
+
+import argparse
+import ast
+from collections import Counter
+from contextlib import ExitStack
+from copy import deepcopy
+from datetime import datetime, timezone
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import types
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+import run_svag_sam3_fps as replay
+from svag_dense_sampling import build_tracking_map
+
+
+ROOT = Path(os.environ.get('EXPERIMENT_ROOT', '.')).resolve()
+DEFAULT_EXPERIMENT = ROOT/'outputs/svag/test_svag_v3_sam3_fps10_20261108'
+DEFAULT_RECOVERY = ROOT/'outputs/svag/test_svag_v3_failed11_recovered_20261109'
+METADATA = ('experiment.json', 'status.json', 'blocked_plans.json',
+            'complete_plans.tsv', 'RUN_GPU.txt')
+SCHEMA_NAMES = {
+    'VisibilitySegment', 'TargetIdentity', 'SVAGTargetIdentity', 'AnchorSelection',
+    'AnchorSelectionResponse', 'SVAGAnchorSelectionResponse',
+    'validate_svag_selection', 'AnchorBox', 'AnchorBoxesResponse', 'SavedAnchor',
+    'SavedMultiAnchorPlan',
+}
+
+
+def read(path):
+    return json.loads(Path(path).read_text())
+
+
+def encoded(value):
+    return (json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False)+'\n').encode()
+
+
+def byte_digest(value):
+    return hashlib.sha256(value).hexdigest()
+
+
+def atomic_bytes(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f'.{path.name}.{os.getpid()}.extension.tmp')
+    try:
+        temporary.write_bytes(value)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def preserve(path, value):
+    path = Path(path)
+    if path.exists():
+        if path.read_bytes() != value:
+            raise ValueError(f'Refusing to replace a frozen input: {path}')
+        return
+    atomic_bytes(path, value)
+
+
+def frozen_models(path):
+    """Load the exact frozen Pydantic validators without loading SAM or videos."""
+    source = ast.parse(Path(path).read_text())
+    selected = [node for node in source.body
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef))
+                and node.name in SCHEMA_NAMES]
+    if {node.name for node in selected} != SCHEMA_NAMES:
+        raise ValueError('Frozen pipeline does not contain the expected plan schemas')
+    name = '_svag_recovery_registration_models_'+replay.digest(path)[:16]
+    module = types.ModuleType(name)
+    module.__dict__.update(BaseModel=BaseModel, ConfigDict=ConfigDict, Field=Field,
+                          field_validator=field_validator, model_validator=model_validator,
+                          Any=Any, Literal=Literal)
+    sys.modules[name] = module
+    tree = ast.Module(body=[ast.ImportFrom(module='__future__',
+                      names=[ast.alias(name='annotations')], level=0), *selected],
+                      type_ignores=[])
+    exec(compile(ast.fix_missing_locations(tree), str(path), 'exec'), module.__dict__)
+    return module
+
+
+def validate_plan(plan, query, schemas):
+    schemas.SavedMultiAnchorPlan.model_validate(plan)
+    if (str(plan['video_id']), str(plan['question_id']), plan['question']) != (
+            query['video_id'], str(query['question_id']), query['question']):
+        raise ValueError(f'Recovered plan question identity differs: {query["sample"]}')
+    if (plan['model'], plan['planning_task'], plan['planner_revision'],
+            plan['planner_provider']) != ('gemini-3.7-flash', 'svag', 'svag-v3', 'gemini'):
+        raise ValueError('Recovered plan changes the registered planner model or revision')
+    if not plan['anchors'] or len(plan['anchors']) > plan['max_anchor_frames']:
+        raise ValueError('Recovered anchor count exceeds its explicit plan budget')
+    selection = schemas.AnchorSelectionResponse.model_validate({
+        key: plan[key] for key in ('decision_summary', 'first_visible_frame_idx',
+                                  'last_visible_frame_idx', 'visibility_boundary_reason', 'targets')
+    } | {'anchors': [{key: anchor[key] for key in ('frame_idx', 'obj_ids', 'reason')}
+                    for anchor in plan['anchors']]})
+    schemas.validate_svag_selection(selection, query['num_frames'])
+    covered = set()
+    for anchor in plan['anchors']:
+        if not Path(anchor['exact_frame_path']).is_file():
+            raise FileNotFoundError('Recovered anchor image is missing')
+        boxes = schemas.AnchorBoxesResponse.model_validate({'boxes': anchor['boxes']})
+        if {box.obj_id for box in boxes.boxes} != set(anchor['obj_ids']):
+            raise ValueError('Recovered anchor boxes do not cover its selected target IDs')
+        covered.update(anchor['obj_ids'])
+    if covered != {target['obj_id'] for target in plan['targets']}:
+        raise ValueError('Recovered plan leaves a target without an initialization box')
+
+
+def require_unstarted(root, manifest):
+    status = read(root/'status.json')
+    if (status.get('phase') != 'prepared' or status.get('completed') != 0
+            or status.get('failed') != 0 or status.get('SAM_started') is not False):
+        raise ValueError('Only a prepared, never-started tracking experiment can be extended')
+    if status.get('total') != manifest['scheduled_queries']:
+        raise ValueError('Prepared status count differs from its registered experiment')
+    dense = root/'dense'
+    if dense.exists() and next(dense.iterdir(), None) is not None:
+        raise ValueError('Tracking output directories already exist')
+    names = ['runtime.json', 'failures.jsonl', 'predictions.json', 'predictions.partial.json',
+             'sampled_observation_index.json', 'merge_summary.json']
+    if any((root/name).exists() for name in names):
+        raise ValueError('Tracking execution artifacts already exist')
+
+
+def recovery_path(recovery, value):
+    path = Path(value)
+    if not path.is_absolute() or not path.resolve().is_relative_to(recovery):
+        raise ValueError('Recovered files must have absolute paths within the recovery root')
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    return path.resolve()
+
+
+def inspect_extension(root, recovery):
+    manifest = read(root/'experiment.json')
+    require_unstarted(root, manifest)
+    replay.verify_inputs(root, manifest)
+    old_samples = {sample['sample']: sample for sample in manifest['samples']}
+    if len(old_samples) != len(manifest['samples']):
+        raise ValueError('Existing registered samples are duplicated')
+    blocked = manifest['blocked_plan_samples']
+    blocked_names = {sample['sample'] for sample in blocked}
+    if len(blocked_names) != len(blocked) or read(root/'blocked_plans.json') != blocked:
+        raise ValueError('Blocked sample registration is inconsistent')
+    source_manifest = Path(manifest['source_experiment_root'])/'inference_manifest.json'
+    if replay.digest(source_manifest) != manifest['source_planning_manifest_sha256']:
+        raise ValueError('Original planning registration changed')
+    queries = read(source_manifest)['queries']
+    by_name = {query['sample']: query for query in queries}
+    if (len(by_name) != len(queries) or len(queries) != manifest['cohort_size']
+            or set(old_samples) & blocked_names
+            or set(old_samples) | blocked_names != set(by_name)):
+        raise ValueError('Successful and blocked plans do not partition the original cohort')
+    index_path = recovery/'recovery_index.json'
+    index = read(index_path)
+    recovered = index['samples']
+    names = [sample['sample'] for sample in recovered]
+    if len(names) != len(set(names)) or set(names) != blocked_names:
+        raise ValueError('Recovery must contain exactly the blocked sample set without duplicates')
+    if not names or any(sample.get('status') != 'complete' for sample in recovered):
+        raise ValueError('Every blocked plan must have a completed recovery')
+    schemas = frozen_models(Path(manifest['tracking_source_root'])/'multi_anchor_box_baseline.py')
+    updated = deepcopy(manifest)
+    new_samples = {}
+    writes = {}
+    provenance = []
+    old_map_frames = 0
+    changed_anchors = 0
+    settings = manifest['tracking']
+    for record in recovered:
+        name = record['sample']
+        query = by_name[name]
+        plan_path = recovery_path(recovery, record['plan_path'])
+        source_map = recovery_path(recovery, record['sam_frame_map_path'])
+        receipt_path = recovery_path(recovery, record['recovery_receipt_path'])
+        raw = plan_path.read_bytes()
+        if byte_digest(raw) != record['plan_sha256']:
+            raise ValueError(f'Recovered plan digest differs from recovery index: {name}')
+        receipt = read(receipt_path)
+        if receipt.get('sample', name) != name or receipt.get('GT_in_inference', False):
+            raise ValueError('Recovery receipt has inconsistent identity or GT usage')
+        plan = json.loads(raw)
+        validate_plan(plan, query, schemas)
+        mapping = build_tracking_map(plan, query['num_frames'], query['source_fps'],
+            target_fps=settings['target_fps'], boundary_seconds=settings['boundary_seconds'],
+            gate_seconds=settings['gate_seconds'])
+        old_map = read(source_map)
+        for anchor in plan['anchors']:
+            if old_map['sam_to_original_frame'].get(str(anchor['sam_frame_idx'])) != anchor['frame_idx']:
+                raise ValueError(f'Recovered source anchor map is inconsistent: {name}')
+            changed_anchors += int(mapping['anchor_sam_indices'][str(anchor['frame_idx'])]
+                                   != anchor['sam_frame_idx'])
+        old_map_frames += old_map['num_sam_frames']
+        video = Path(query['video_path']).resolve()
+        stat = video.stat()
+        if (stat.st_size, stat.st_mtime_ns) != (query['source_video_bytes'], query['source_stat_mtime_ns']):
+            raise ValueError(f'Recovered query source video changed: {name}')
+        frozen = root/'inputs/plans'/name/'multi_anchor_plan.json'
+        map_path = root/'inputs/maps'/f'{name}.json'
+        writes[frozen] = raw
+        map_raw = encoded(mapping)
+        writes[map_path] = map_raw
+        new_samples[name] = {key: query[key] for key in
+            ['sample', 'video_id', 'question_id', 'question', 'num_frames', 'source_fps', 'width', 'height']} | {
+                'video_path': str(video), 'video_size_bytes': stat.st_size,
+                'video_mtime_ns': stat.st_mtime_ns, 'source_video_sha256': query['source_video_sha256'],
+                'source_plan': str(plan_path), 'frozen_plan': str(frozen),
+                'plan_sha256': record['plan_sha256'], 'tracking_map_path': str(map_path),
+                'tracking_map_sha256': byte_digest(map_raw),
+                'recovery_receipt_path': str(receipt_path),
+                'recovery_receipt_sha256': replay.digest(receipt_path)}
+        updated['source_plan_sha256'][str(plan_path)] = record['plan_sha256']
+        provenance.append({'sample': name, 'source_plan': str(plan_path),
+                           'plan_sha256': record['plan_sha256'],
+                           'receipt': str(receipt_path), 'receipt_sha256': replay.digest(receipt_path)})
+    updated['samples'] = [old_samples.get(query['sample'], new_samples.get(query['sample']))
+                          for query in queries]
+    updated['scheduled_queries'] = len(queries)
+    updated['blocked_plan_samples'] = []
+    fps_count, fps_frames = Counter(), Counter()
+    for sample in updated['samples']:
+        fps_count[sample['source_fps']] += 1
+        mapping = json.loads(writes[Path(sample['tracking_map_path'])]) if sample['sample'] in new_samples else read(sample['tracking_map_path'])
+        fps_frames[sample['source_fps']] += mapping['num_sam_frames']
+    summary = updated['sampling_summary']
+    summary['num_sam_input_frames'] = sum(fps_frames.values())
+    summary['old_plan_map_frames'] += old_map_frames
+    summary['anchor_SAM_indices_recomputed'] += changed_anchors
+    summary['questions_by_source_fps'] = dict(fps_count)
+    summary['SAM_frames_by_source_fps'] = dict(fps_frames)
+    updated['merge_scope'] = 'Full original test cohort; original valid plans plus explicitly recovered plans'
+    updated['source_sha256'][str(Path(__file__).resolve())] = replay.digest(__file__)
+    metadata_bytes = {name: (root/name).read_bytes() for name in METADATA}
+    expected_tsv = ''.join(f'{s["video_id"]}\t{s["question_id"]}\n' for s in manifest['samples']).encode()
+    if metadata_bytes['complete_plans.tsv'] != expected_tsv:
+        raise ValueError('Original complete-plans subset differs from its registered order')
+    proof = {'integrated_at': datetime.now(timezone.utc).isoformat(),
+        'original_scheduled_queries': len(old_samples), 'recovered_queries': len(new_samples),
+        'scheduled_queries': len(queries), 'blocked_plans': 0,
+        'source_recovery_root': str(recovery), 'recovery_index_path': str(index_path),
+        'recovery_index_sha256': replay.digest(index_path),
+        'original_manifest_sha256': byte_digest(metadata_bytes['experiment.json']),
+        'backup_directory': str(root/'recovery_registration_before'),
+        'original_successful_plan_and_map_bytes_preserved': True,
+        'tracking_sources_unchanged': True, 'SAM_started': False,
+        'model_calls_in_this_extension': 0, 'GT_inputs': [], 'recovered_plans': provenance}
+    updated['recovery_integration'] = proof
+    return updated, writes, metadata_bytes, proof
+
+
+def extend(root, recovery, *, apply=False):
+    root, recovery = Path(root).resolve(), Path(recovery).resolve()
+    with ExitStack() as stack:
+        for name in ['.tracking.lock', 'run.lock']:
+            if name == 'run.lock' and not (root/name).exists():
+                continue
+            lock = stack.enter_context((root/name).open('a+'))
+            try:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise ValueError('Tracking or registration is active; inputs cannot be changed') from error
+        updated, writes, originals, proof = inspect_extension(root, recovery)
+        result = {key: proof[key] for key in ['original_scheduled_queries', 'recovered_queries',
+                    'scheduled_queries', 'blocked_plans', 'model_calls_in_this_extension', 'GT_inputs']}
+        result.update(mode='apply' if apply else 'check_only', ready=True,
+                      SAM_input_frames=updated['sampling_summary']['num_sam_input_frames'])
+        if not apply:
+            return result
+        backup = root/'recovery_registration_before'
+        for name, raw in originals.items():
+            preserve(backup/name, raw)
+        preserve(backup/'backup_receipt.json', encoded({
+            'original_manifest_sha256': proof['original_manifest_sha256'],
+            'files': {name: byte_digest(raw) for name, raw in originals.items()}}))
+        for path, raw in writes.items():
+            preserve(path, raw)
+        # Verify new and existing on-disk inputs using the unchanged production runner.
+        validation = replay.verify_inputs(root, updated)
+        status = {'phase': 'prepared', 'updated_at': proof['integrated_at'],
+            'cohort_total': updated['cohort_size'], 'total': updated['scheduled_queries'],
+            'completed': 0, 'failed': 0, 'pending': updated['scheduled_queries'],
+            'blocked_plans': 0, 'recovered_plans': proof['recovered_queries'],
+            'current_sample': None, 'SAM_started': False}
+        guide = ('SVAG v3 saved plans plus recovered plans -> SAM3 FPS-aware dense\n\n'
+            f'Prepared: {updated["scheduled_queries"]} plans; blocked: 0.\n'
+            f'Original {proof["original_scheduled_queries"]} plan/map bytes are unchanged; '
+            f'{proof["recovered_queries"]} recovered plans are explicitly recorded.\n'
+            'Tracking source, checkpoint, FPS policy, and GPU command are unchanged.\n'
+            'OVIS 5fps uses all frames; other sources use up to 10fps, exact anchors, '
+            'and visibility-boundary windows.\n\n'
+            f'GPU pod command:\ncd {ROOT}\nbash scripts/run_svag_sam3_fps.sh --detach\n\n'
+            f'CPU input check:\n{ROOT}/.venv/bin/python scripts/run_svag_sam3_fps.py '
+            f'--experiment-root {root} --check-inputs\n')
+        metadata = {'blocked_plans.json': encoded([]), 'complete_plans.tsv': ''.join(
+            f'{s["video_id"]}\t{s["question_id"]}\n' for s in updated['samples']).encode(),
+            'RUN_GPU.txt': guide.encode(), 'status.json': encoded(status),
+            'experiment.json': encoded(updated)}
+        try:
+            # Manifest is the final commit: every referenced input is already present.
+            for name, raw in metadata.items():
+                atomic_bytes(root/name, raw)
+            validation = replay.verify_inputs(root, read(root/'experiment.json'))
+        except BaseException:
+            for name, raw in originals.items():
+                atomic_bytes(root/name, raw)
+            raise
+        proof = {**proof, 'production_input_verification': validation,
+                 'registered_manifest_sha256': replay.digest(root/'experiment.json')}
+        atomic_bytes(root/'recovery_extension_verification.json', encoded(proof))
+        return {**result, 'production_input_verification': validation,
+                'verification_path': str(root/'recovery_extension_verification.json')}
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--experiment-root', type=Path, default=DEFAULT_EXPERIMENT)
+    parser.add_argument('--recovery-root', type=Path, default=DEFAULT_RECOVERY)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--check-only', action='store_true')
+    mode.add_argument('--apply', action='store_true')
+    args = parser.parse_args(argv)
+    print(json.dumps(extend(args.experiment_root, args.recovery_root, apply=args.apply),
+                     ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

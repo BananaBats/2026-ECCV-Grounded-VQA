@@ -1,0 +1,20 @@
+{
+  "model": "gemini-3.7-flash",
+  "transport": "dependent Standard requests, not a single independent Batch",
+  "output_frame_stride": 1,
+  "context_frame_stride": 30,
+  "max_chunk_frames": 96,
+  "max_inline_bytes": 67108864,
+  "handoff_frames": 3,
+  "temperature": 0,
+  "thinking_level": "high",
+  "max_output_tokens": 65536,
+  "max_tokens_recovery": "halve adaptive chunk cap down to12 on MAX_TOKENS",
+  "target_selection": "first chunk chooses targets independently from video/question; later chunks reuse only its self-generated registry",
+  "input_exclusions": [
+    "saved pipeline plan",
+    "SAM",
+    "GT",
+    "prior baseline answers"
+  ]
+}

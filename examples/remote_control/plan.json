@@ -1,0 +1,43 @@
+{
+  "question": "Track the launched object or objects.",
+  "answer_noun_phrase": "the remote control",
+  "decision_summary": "Track the single launched object, the remote control. A single anchor frame at frame 0 is chosen where the remote control is clearly visible and fully unoccluded on the table.",
+  "first_visible_frame_idx": 0,
+  "last_visible_frame_idx": 556,
+  "visibility_boundary_reason": "The remote control remains visible on the table and cutting board throughout the entire video sequence from frame 0 to frame 556.",
+  "targets": [
+    {
+      "obj_id": 0,
+      "object_label": "the remote control",
+      "visual_identity_description": "A small, thin rectangular infrared remote control with multiple colorful buttons.",
+      "visibility_segments": [
+        {
+          "first_frame_idx": 0,
+          "last_frame_idx": 556
+        }
+      ]
+    }
+  ],
+  "anchors": [
+    {
+      "frame_idx": 0,
+      "obj_ids": [
+        0
+      ],
+      "reason": "Frame 0 provides a clear, unobstructed view of the remote control lying on the table before being handled.",
+      "boxes": [
+        {
+          "obj_id": 0,
+          "box_2d": [
+            590,
+            245,
+            669,
+            336
+          ],
+          "reason": "the remote control",
+          "confidence": 1.0
+        }
+      ]
+    }
+  ]
+}

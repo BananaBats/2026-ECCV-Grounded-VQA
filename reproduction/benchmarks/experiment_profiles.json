@@ -1,0 +1,489 @@
+{
+  "schema_version": 1,
+  "method": "SD-Track",
+  "scope": "Recorded main-paper experiments and their actual historical execution profiles",
+  "recorded_results_not_fresh_inference": true,
+  "new_model_requests_during_packaging": 0,
+  "new_GPU_runs_during_packaging": 0,
+  "profiles": {
+    "minimal": {
+      "public_entrypoint": "postprocess/fusion.py",
+      "CLI_profile": "minimal",
+      "residual_tau": 0.3,
+      "gap_tau": 0.3,
+      "identity_rule": "same plan ID; sparse IDs define fused output identities",
+      "residual_rule": "sparse-minus-dense coordinate residual from shared frames whose IoU is at least residual_tau; two-sided linear interpolation and nearest extension outside the reference span",
+      "ownership": "corrected dense owns its observation frames, including rejected sparse overlaps; sparse fills frames without dense observations",
+      "gap_rule": "linear interpolation of interior missing frames only when the final endpoint boxes meet gap_tau; no endpoint extrapolation",
+      "historical_core_revision": "minimal-residual-one-iou-v1",
+      "historical_core_filename": "minimal_residual_fusion.py",
+      "historical_core_sha256": "1991a51a3830d7489cf9032411ac53b11e68e3215d2963be1064418776599be1"
+    },
+    "legacy_v13": {
+      "public_entrypoint": "postprocess/fusion.py",
+      "CLI_profile": "legacy_v13",
+      "description": "Historical multi-gate fusion; not an alias for minimal and not a one-threshold ablation",
+      "defaults": {
+        "min_anchor_iou": 0.25,
+        "minimum_shared_sparse_frames": 3,
+        "mean_agreement_gate_iou": 0.3,
+        "style_agreement_iou": 0.3,
+        "nearest_residual_window_frames": 60,
+        "unconditional_short_gap_frames": 6,
+        "long_gap_endpoint_iou": 0.3
+      },
+      "ownership": "sparse-first; trusted sampled-SAM overlay, with sparse-only fallback when target reliability gates fail",
+      "public_legacy_implementation": "postprocess/legacy/fuse_dense_sparse.py"
+    }
+  },
+  "experiments": [
+    {
+      "id": "pt_test_legacy",
+      "paper_item": "Perception Test comparison",
+      "dataset": "Perception Test",
+      "split": "official test",
+      "cohort": {
+        "queries": 1859,
+        "videos": 932
+      },
+      "fusion_profile": "legacy_v13",
+      "box_mode": "amodal sparse; visible SAM masks",
+      "evaluation_protocol": "official hidden-GT question-macro HOTA",
+      "metrics_unit": "0--100",
+      "paper_values": {
+        "dense_HOTA": 62.63,
+        "fusion_HOTA": 66.2
+      },
+      "fallback": {
+        "rule": "unchanged dense export for sparse failures",
+        "queries": 2,
+        "sample_ids": [
+          "video_7360_q5",
+          "video_7567_q5"
+        ]
+      },
+      "accuracy_evidence_status": "historical server-reported values; independently verified local submission structure, not hidden-GT accuracy",
+      "evidence": [
+        {
+          "historical_filename": "README.md",
+          "historical_sha256": "8aadad96769b973d533b14b05088befdd364d38dbe61559f17549af8fba19ee4",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "fusion_final_summary.json",
+          "historical_sha256": "515d326692c8158b799ee07ce6a62222e560275f82bf80606aa388d43b987889",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "test.tsv",
+          "historical_sha256": "76fe84fc530ce3071318bdde9fa933df9caf5995dd27675099f06e6fe8bcb45a",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        }
+      ]
+    },
+    {
+      "id": "vidstg_decl_minimal_5fps",
+      "paper_item": "VidSTG comparison",
+      "dataset": "VidSTG",
+      "split": "test declarative queries only",
+      "cohort": {
+        "queries": 4610,
+        "complete_sparse_queries": 4525,
+        "fixed_dense_fallback_queries": 85
+      },
+      "fusion_profile": "minimal",
+      "box_mode": "visible sparse, not amodal",
+      "evaluation_protocol": "vidstg_5fps_max200",
+      "metrics_unit": "0--100",
+      "paper_values": {
+        "m_tIoU": 55.62,
+        "m_vIoU": 40.47,
+        "vIoU@0.3": 57.61,
+        "vIoU@0.5": 42.62
+      },
+      "recorded_metrics_fraction": {
+        "m_tIoU": 0.5561643350269125,
+        "m_vIoU": 0.40465155776064093,
+        "vIoU@0.3": 0.5761388286334056,
+        "vIoU@0.5": 0.4262472885032538
+      },
+      "accuracy_evidence_status": "exact rounded values verified against the recorded local evaluation",
+      "sensitivity_note": "The separate vidstg_native protocol gives m_vIoU 40.5203360681 and vIoU@0.5 43.0585683297 on the same 4610 queries; these are not the paper table protocol.",
+      "evidence": [
+        {
+          "historical_filename": "report.json",
+          "historical_sha256": "468fac8fb329b8bdbfef6da9feb12c1a38e561887565282b270d0b68558f5426",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "config.json",
+          "historical_sha256": "e8028408a530efe5851d734f02de1bce92ff2d476557d8660ed783a0bca63a36",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "cohort.json",
+          "historical_sha256": "f621d3b54e1cbeec3c51f12dd30851eb86c5f8610bcf2c9f4b2fffac56effcb6",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        }
+      ],
+      "recorded_inference": {
+        "planning_model": "gemini-3.8-flash",
+        "sparse_model": "gemini-3.8-flash",
+        "dense_target_fps": 10.0,
+        "sparse_target_fps": 1.0,
+        "sparse_frames_per_call": 8,
+        "source_clock_note": "Source clips have mixed10/15/23.976/24/25/29.97fps. Native-clock1Hz and10Hz schedules are not equivalent to fixed source strides30 and3 across this cohort.",
+        "legacy_field_note": "The archived dense run contains sam_stride=3 as a legacy field as well as authoritative sam_target_fps=10.0; do not use the legacy field alone to recreate its schedule."
+      }
+    },
+    {
+      "id": "hc_v1_test_legacy",
+      "paper_item": "HC-STVG v1 comparison",
+      "dataset": "HC-STVG v1",
+      "split": "test",
+      "cohort": {
+        "queries": 1160
+      },
+      "fusion_profile": "legacy_v13",
+      "box_mode": "amodal sparse; visible SAM masks",
+      "evaluation_protocol": "hc_native",
+      "metrics_unit": "0--100",
+      "paper_values": {
+        "m_tIoU": 62.05,
+        "m_vIoU": 47.39,
+        "vIoU@0.3": 77.24,
+        "vIoU@0.5": 51.47
+      },
+      "recorded_metrics_fraction": {
+        "m_tIoU": 0.6205494294055172,
+        "m_vIoU": 0.4739185186346325,
+        "vIoU@0.3": 0.7724137931034483,
+        "vIoU@0.5": 0.5146551724137931
+      },
+      "accuracy_evidence_status": "exact rounded values verified against the recorded local evaluation",
+      "evidence": [
+        {
+          "historical_filename": "fused_report.json",
+          "historical_sha256": "f8dafc84f4651801b4f360a4777873c4b9c0079c5db6b43184a5491d75522950",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "fusion_final_summary.json",
+          "historical_sha256": "fed18df7c1df9df329b10156f1f510c7eb6e6d8b0601ad7d7a1401e59d749b3c",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        }
+      ]
+    },
+    {
+      "id": "hc_v2_val_legacy",
+      "paper_item": "HC-STVG v2 comparison",
+      "dataset": "HC-STVG v2",
+      "split": "validation, not held-out test",
+      "cohort": {
+        "queries": 2000
+      },
+      "fusion_profile": "legacy_v13",
+      "box_mode": "amodal sparse; visible SAM masks",
+      "evaluation_protocol": "hc_native",
+      "metrics_unit": "0--100",
+      "paper_values": {
+        "m_tIoU": 63.65,
+        "m_vIoU": 43.19,
+        "vIoU@0.3": 69.8,
+        "vIoU@0.5": 42.0
+      },
+      "recorded_metrics_fraction": {
+        "m_tIoU": 0.6365102613115339,
+        "m_vIoU": 0.4319312926477471,
+        "vIoU@0.3": 0.698,
+        "vIoU@0.5": 0.42
+      },
+      "accuracy_evidence_status": "exact rounded values verified against the recorded local evaluation",
+      "sensitivity_note": "The legacy dense result m_vIoU43.4934441704 exceeds legacy fusion43.1931292648; this row is not evidence that fusion helps every benchmark.",
+      "evidence": [
+        {
+          "historical_filename": "fused_report.json",
+          "historical_sha256": "fc5c49ccd4a576d10b93e374b9ed72944a1130d69199e7aa946cd2745604066e",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "summary.json",
+          "historical_sha256": "22c03809a03a45913baa066fd66f7fd0ed114e8c81fb061747ead30b3dc02d8a",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "run.sh",
+          "historical_sha256": "b9014656388264ac4a684b6dfd3cc1a0f28f90570f034ae51cacb2d4c07256e4",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "source_hashes.json",
+          "historical_sha256": "f971d88d8d1e2f4f5049d0dbd92b935850c73ffd11e20b7b3c44d9ada8138c80",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        }
+      ]
+    },
+    {
+      "id": "svag_test_minimal",
+      "paper_item": "SVAG-Bench comparison",
+      "dataset": "SVAG-Bench",
+      "split": "official test",
+      "cohort": {
+        "queries": 1833,
+        "videos": 146,
+        "datasets": {
+          "OVIS": 902,
+          "MOT17": 499,
+          "MOT20": 432
+        }
+      },
+      "fusion_profile": "minimal",
+      "box_mode": "amodal sparse; visible SAM masks",
+      "evaluation_protocol": "official server protocol; identical predicted action segments for dense and fusion submissions",
+      "metrics_unit": "0--100",
+      "paper_values": {
+        "HOTA": 13.31,
+        "mIoU": 36.28,
+        "R1@0.5": 36.45,
+        "m-HIoU": 24.8
+      },
+      "accuracy_evidence_status": "paper-reported; official score receipt not included and accuracy not independently verified in this code release",
+      "local_verification_status": "submission schema, source-frame/ID binding, cohort completeness and identical dense/fusion temporal predictions verified",
+      "evidence": [
+        {
+          "historical_filename": "packaging_summary.json",
+          "historical_sha256": "2f165aa147ea8dd0c8e94618d83814c4c9464dec5b3582c7f0b0b7aad6bab356",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "registration.json",
+          "historical_sha256": "e98d0a8d211bc496cb9d2f8f4fe42b7dbc0abcfe0eb326e9c97388f12e47af2f",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "registration.json",
+          "historical_sha256": "cf2a3974fdd26cc320e5f88e84a26229a7d9bff9e6bf57cb78db547f73cad5d3",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "execution_verification.json",
+          "historical_sha256": "0f03a95571888e633cdbeda5395348ded0b72af8f6bd3da7a43c082619054095",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        }
+      ],
+      "planning_anchor_budget": {
+        "registered_primary_budget": 3,
+        "actual_final_plan_anchor_frame_counts": {
+          "1": 1773,
+          "2": 41,
+          "3": 15,
+          "4": 3,
+          "19": 1
+        },
+        "frozen_plans_checked": 1833,
+        "all_plan_sha256_match_dense_registration": true,
+        "recovered_plans_total": 11,
+        "recovered_over_budget_queries": 4,
+        "coverage_exceptions": [
+          {
+            "sample": "video_3_q1006",
+            "anchor_frames": 19,
+            "target_instances": 33
+          },
+          {
+            "sample": "video_6_q874",
+            "anchor_frames": 4,
+            "target_instances": 4
+          },
+          {
+            "sample": "video_140_q5138",
+            "anchor_frames": 4,
+            "target_instances": 9
+          },
+          {
+            "sample": "video_140_q5583",
+            "anchor_frames": 4,
+            "target_instances": 9
+          }
+        ],
+        "exception_policy": "Recorded recovery preserved every selected target identity by retaining or adding registered-grid coverage anchors. It explicitly treated the three-anchor limit as soft; no GT was used.",
+        "fresh_generation_note": "A fresh strict three-anchor planner run does not automatically reproduce these historical recovery exceptions. Exact replay requires the corresponding archived final plans and source maps; neither truncate them to three nor claim all test plans used at most three anchors."
+      }
+    },
+    {
+      "id": "pt_val200_systems",
+      "paper_item": "Accuracy and API cost",
+      "dataset": "Perception Test",
+      "split": "validation subset",
+      "cohort": {
+        "queries": 200,
+        "videos": 190
+      },
+      "fusion_profile": "minimal",
+      "evaluation_protocol": "annotated-GT frames; question-macro HOTA",
+      "metrics_unit": "0--100",
+      "paper_values": {
+        "dense_HOTA": 66.86,
+        "sparse_linear_HOTA": 65.61,
+        "direct_amodal_HOTA": 72.55,
+        "fusion_HOTA": 71.8,
+        "dense_API_USD": 7.54,
+        "sparse_and_fusion_API_USD": 20.91,
+        "direct_API_USD": 206.18
+      },
+      "recorded_exact": {
+        "dense_HOTA": 66.86100737123357,
+        "sparse_linear_HOTA": 65.61104078564699,
+        "direct_amodal_HOTA": 72.54959926871922,
+        "fusion_HOTA": 71.8017957067947,
+        "dense_cost": 7.54044225,
+        "sparse_and_fusion_cost": 20.90977575,
+        "direct_cost": 206.18408925
+      },
+      "comparators": {
+        "dense": "same shared plan as sparse/fusion; unchanged dense export",
+        "sparse_linear": "same sparse amodal predictions as fusion; unconditional interior linear box interpolation, no SAM or endpoint extrapolation",
+        "direct_amodal": "independent answer-instance selection in first JPEG chunk, target registry carried into later chunks; no saved SD-Track plan, prior answer, SAM or GT input",
+        "fusion": "same plan, dense observations and sparse amodal predictions, minimal profile"
+      },
+      "accuracy_evidence_status": "exact rounded values verified against recorded local evaluation",
+      "evidence": [
+        {
+          "historical_filename": "cost_summary.json",
+          "historical_sha256": "ab19c4a48f5833c7fef339d117cefa920f119ab75c48afc3aacc034899b5421f",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "merge_controls_summary.json",
+          "historical_sha256": "494308b75027d843ab59e9ba785f8d638628dc48addf20602c43fa3492928f64",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "summary.json",
+          "historical_sha256": "4a41b977c2511fa7c6b69db57efe4982a86586e857e575c87cd8a2cb52178d69",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        }
+      ]
+    },
+    {
+      "id": "pt_val200_no_expansion",
+      "paper_item": "Amodal extent ablation",
+      "dataset": "Perception Test",
+      "split": "same validation subset",
+      "cohort": {
+        "queries": 200,
+        "videos": 190
+      },
+      "fusion_profile": "minimal",
+      "control_mode": "no_expansion_fixed_support",
+      "evaluation_protocol": "same GT frames and question-macro HOTA as full fusion",
+      "paper_values": {
+        "full_HOTA": 71.8,
+        "without_expansion_HOTA": 69.17,
+        "delta_HOTA_points": -2.63
+      },
+      "recorded_exact": {
+        "full_HOTA": 71.80179570679472,
+        "fixed_no_expansion_HOTA": 69.16957321266142
+      },
+      "control_definition": "Use the same accepted residual anchors as full. Retain residual center displacements and negative halfextent changes; set positive halfextent changes to zero. Preserve sparse-only fallback, full output-frame support and full interpolation endpoints.",
+      "accuracy_evidence_status": "exact rounded values verified against recorded local evaluation; posthoc validation control, not independent test evidence",
+      "evidence": [
+        {
+          "historical_filename": "summary.json",
+          "historical_sha256": "4a41b977c2511fa7c6b69db57efe4982a86586e857e575c87cd8a2cb52178d69",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "sample_scores.csv",
+          "historical_sha256": "f7fc56ca7d6772b82fb645c6e6913ada68b5123631c2de74cc70d2f9bfb517e9",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        }
+      ]
+    },
+    {
+      "id": "pt_remote_residual_example",
+      "paper_item": "Moving remote qualitative example",
+      "dataset": "Perception Test",
+      "split": "posthoc validation illustration",
+      "cohort": {
+        "queries": 1,
+        "sample": "video_2099_q5",
+        "predicted_ID": 0,
+        "GT_ID_for_display": 4,
+        "displayed_frames": [
+          300,
+          306,
+          315,
+          324,
+          330
+        ]
+      },
+      "fusion_profile": "minimal",
+      "evaluation_protocol": "whole-question HOTA over all annotated frames, not just the displayed one-second interval",
+      "paper_values": {
+        "dense_question_HOTA": 65.28,
+        "fusion_question_HOTA": 83.09,
+        "gain_HOTA_points": 17.81,
+        "frame300_dense_IoU": 0.384,
+        "frame300_fusion_IoU": 0.869,
+        "frame330_dense_IoU": 0.245,
+        "frame330_fusion_IoU": 0.655
+      },
+      "recorded_exact": {
+        "question_SAM_HOTA": 65.28255800170733,
+        "question_Fusion_HOTA": 83.09234208151427,
+        "endpoint_SAM_IoU": [
+          0.3841977368295191,
+          0.24491735338081183
+        ],
+        "endpoint_Fusion_IoU": [
+          0.869096743405771,
+          0.6547009811618144
+        ]
+      },
+      "qualitative_limit": "The nine intermediate SAM sampling frames have no Gemini observation or GT annotation. Do not interpolate GT for scoring, claim measured intermediate accuracy or imply one-sided causal tracking.",
+      "accuracy_evidence_status": "saved coordinates and whole-query scores verified; exact final cosmetic paper PDF layout not guaranteed",
+      "evidence": [
+        {
+          "historical_filename": "video_2099_q5.json",
+          "historical_sha256": "2c3e8775929ce47751407eba1b1d603e4ebb6228396f0096f9872515e197b14f",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        },
+        {
+          "historical_filename": "manifest.json",
+          "historical_sha256": "9f6be07416cadbb4bfcf9a4fbbf46c9db4e24e92053d2cf29dda6d51706832c1",
+          "status": "recorded artifact digest, not the public-package file checksum"
+        }
+      ]
+    }
+  ],
+  "cost_convention": {
+    "unit": "USD",
+    "basis": "historical recorded-token estimates, not billing invoices",
+    "comparison": "all rows normalized to the historical Standard rate schedule",
+    "historical_standard_per_million_tokens": {
+      "prompt_uncached": 0.75,
+      "prompt_cached": 0.075,
+      "output_including_thinking": 3.75
+    },
+    "historical_rate_verification_date": "2026-11-10",
+    "batch_multiplier": 0.5,
+    "pipeline_standard_equivalent_total": 20.90977575,
+    "pipeline_executed_mode_estimate": 14.225109,
+    "pipeline_executed_mode": "Standard plan plus Batch sparse",
+    "pipeline_plan_standard": 7.54044225,
+    "pipeline_sparse_standard_equivalent": 13.3693335,
+    "pipeline_sparse_batch_estimate": 6.68466675,
+    "direct_standard_recorded_tokens_total": 206.18408925,
+    "direct_reuses_pipeline_plan": false,
+    "direct_cost_note": "Direct includes its own answer selection in its recorded Direct calls; no external shared-plan cost is appended. Received paid retry responses are counted.",
+    "GPU_API_table_included": false,
+    "successful_SAM_GPU_hours": 2.3095555555555554,
+    "missing_usage_errors_excluded": 57,
+    "missing_usage_note": "No recorded response tokens for 56 HTTP429 and one HTTP504 response; provider-side charges cannot be inferred without an invoice.",
+    "historical_rates_are_not_current_price_guarantee": true
+  },
+  "reproduction_instructions": "../PROTOCOL.md",
+  "portability_note": "Recorded source filenames and digests identify historical evidence. Public files may contain portability edits and have separate release checksums. No private source path is required."
+}

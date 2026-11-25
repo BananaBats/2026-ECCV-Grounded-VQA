@@ -1,0 +1,146 @@
+{
+  "benchmarks": {
+    "perception_test": {
+      "models": {
+        "planner": "gemini-3.7-flash",
+        "sparse": "gemini-3.7-flash"
+      },
+      "planning": {
+        "policy": "uniform labeled proxy with <=192 source frames, aspect-ratio preserving max dimension512; no upscaling",
+        "api_video_sampling_fps": 4.0,
+        "representative_encoded_proxy_fps": 6.0,
+        "clock_caveat": "API proxy video sampling FPS is NOT source-clock FPS and differs from anchor-candidate grid."
+      },
+      "anchor_candidates": "source frame stride10; exact source images supplied for selected anchors",
+      "dense": "source frame stride3 plus all anchors and complete boundary windows +/-15source frames; joint session; visibility gate margin15source frames",
+      "sparse": "source stride30; up to8 native-resolution JPEG images per call",
+      "evaluator": "official hidden-GT server; original-source frame indexing"
+    },
+    "perception_val200": {
+      "models": {
+        "planner": "gemini-3.7-flash",
+        "sparse": "gemini-3.7-flash"
+      },
+      "planning": {
+        "policy": "uniform labeled proxy with <=192 source frames, aspect-ratio preserving max dimension512; no upscaling",
+        "api_video_sampling_fps": 4.0,
+        "representative_encoded_proxy_fps": 6.0,
+        "clock_caveat": "API proxy video sampling FPS is NOT source-clock FPS and differs from anchor-candidate grid."
+      },
+      "anchor_candidates": "source stride10 per frozen perception profile",
+      "dense": "source stride3 plus exact anchors/boundary +/-15; visibility margin15; joint session",
+      "sparse": "source stride30, up to8 images/call, HIGH thinking; Batch",
+      "resolution": "planning maxside512; exact anchor PNGs/native sparse JPEGs; no explicit sparse resize",
+      "evaluator": "local official-style Perception HOTA on actual GT query-frame union; no synthetic GT interpolation"
+    },
+    "vidstg_declarative_test": {
+      "models": {
+        "planner": "gemini-3.8-flash",
+        "sparse": "gemini-3.8-flash"
+      },
+      "planning": {
+        "policy": "uniform labeled proxy with <=192 source frames, aspect-ratio preserving max dimension512; no upscaling",
+        "api_video_sampling_fps": 4.0,
+        "representative_encoded_proxy_fps": 6.0,
+        "clock_caveat": "API proxy video sampling FPS is NOT source-clock FPS and differs from anchor-candidate grid."
+      },
+      "anchor_candidates": "source stride10 per saved VidSTG configuration",
+      "dense": "native-clock10Hz floor(k*source_fps/10+0.5), additionally saved sparse1Hz frame union, anchors and boundaries; no maxframe cap in inference",
+      "sparse": "native-clock1Hz floor(k*source_fps+0.5), up to8 full-resolution JPEG images/call, no per-video frame cap",
+      "boundary_gate": "15source frames in saved profile (not15seconds)",
+      "evaluator": "Table2 uses tubedetr_5fps_max200; native_all_frames is separate sensitivity protocol",
+      "generation_actual": {
+        "temperature": 0.0,
+        "thinkingLevel": "HIGH",
+        "maxOutputTokens": 32768,
+        "responseMimeType": "application/json"
+      }
+    },
+    "hcstvg_v1_test_and_v2_validation": {
+      "models": {
+        "planner": "gemini-3.8-flash",
+        "sparse": "gemini-3.8-flash"
+      },
+      "planning": {
+        "policy": "uniform labeled proxy with <=192 source frames, aspect-ratio preserving max dimension512; no upscaling",
+        "api_video_sampling_fps": 4.0,
+        "representative_encoded_proxy_fps": 6.0,
+        "clock_caveat": "API proxy video sampling FPS is NOT source-clock FPS and differs from anchor-candidate grid."
+      },
+      "anchor_candidates": "source stride10; max3 nominal anchor frames",
+      "dense": "source stride3 plus anchors and +/-15source-frame boundary windows; visibility margin15source frames",
+      "sparse": "source stride30, up to8 full-resolution JPEG frames/call; sparse grounding window margin30source frames",
+      "clock_caveat": "source clips range15\u201330fps, so D5\u201310Hz and S0.5\u20131Hz; do not label all10Hz/1Hz",
+      "evaluator": "native original-frame evaluation, no max200 cap; predicted grounding segment, not GT crop",
+      "generation_planning_actual": {
+        "temperature": 0.0,
+        "thinking": "not explicitly specified in inspected request",
+        "max_output_tokens": "not explicitly specified in inspected request"
+      },
+      "generation_sparse_actual": {
+        "thinking": "HIGH in actual manifest",
+        "temperature": "0 in shared source; actual request payload not inspected here",
+        "max_output_tokens": "not verified in this audit"
+      }
+    },
+    "svag_test": {
+      "models": {
+        "planner": "gemini-3.7-flash",
+        "sparse": "gemini-3.7-flash"
+      },
+      "planning": {
+        "policy": "uniform labeled proxy with <=192 source frames, aspect-ratio preserving max dimension512; no upscaling",
+        "api_video_sampling_fps": 4.0,
+        "representative_encoded_proxy_fps": 6.0,
+        "clock_caveat": "API proxy video sampling FPS is NOT source-clock FPS and differs from anchor-candidate grid."
+      },
+      "anchor_candidates": "target3Hz; all source frames if source FPS<=5; final frame included in allowed grid",
+      "dense": "target min(source_fps,10)Hz; round(k*source_fps/effective_fps), plus exact anchors and visibility-boundary windows; ceil(source_fps*0.5) boundary/gate margin",
+      "sparse": "native-clock1Hz plus saved anchors only when a target lacks a visible grid observation",
+      "resolution": "decoder-exact full-resolution ffmpeg JPEG q:v=2; no resize",
+      "generation_actual": {
+        "temperature": 0.0,
+        "thinking_level": "high",
+        "max_output_tokens": 32768,
+        "max_attempts": 3,
+        "frames_per_call": 8,
+        "max_object_frames_per_call": 64
+      },
+      "sparse_batch_sizing": "min(8,max(1,64//number_of_saved_targets)) images/call",
+      "evaluator": "official SVAGEval/Codabench; source-frame indices preserved",
+      "sam_checkpoint_verified": {
+        "name": "sam3.pt",
+        "SHA256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+        "bytes": 3450062241,
+        "SAM3_git_commit": "f1647e8d0c1d280991f4d1b7d974c2704537fe66"
+      }
+    }
+  },
+  "source_settings": {
+    "planner_function_generation": {
+      "temperature": 0.0,
+      "tool_call": "ANY; permitted function name fixed; JSON-schema function argument validation",
+      "thinking_or_output_budget": "not explicitly set by original planning function_config; do not invent values from provider defaults"
+    },
+    "common_sparse_source": {
+      "temperature": 0.0,
+      "thinking_level": "argument-driven; representative actual HIGH confirmed",
+      "max_output_tokens": "argument-driven; actual SVAG+Vid32768 confirmed, PT/HC exact cap not reverified",
+      "response_format": "application/json + schema",
+      "images": "exact JPEG source frames via ffmpeg q:v=2; no scale filter"
+    },
+    "SAM_resolution": {
+      "predictor_default_input_size": 1008,
+      "meaning": "square1008x1008 internal model input, distinct from native output mask/box coordinates and512px MLLM planning proxy",
+      "scope_caveat": "observed model_builder code setting; no runtime hook executed to assert historical shape for every benchmark"
+    },
+    "SAM_checkpoint_scope": "SVAG checkpoint SHA and SAM3 commit are registered. No independent per-benchmark checkpoint SHA binding established here for older PT/HC/Vid runs; do not claim every benchmark used that SHA solely from current symlink."
+  },
+  "unverified": [
+    "All-benchmark historical exact checkpoint SHA binding",
+    "PT/HC sparse max_output_tokens from actual request payloads",
+    "Provider-side unrecorded generation defaults",
+    "Complete source/native dimension distribution; no single fixed sparse image resolution",
+    "All-run count audit of planning proxy metadata (representative archived records inspected, not everyquery)"
+  ]
+}
